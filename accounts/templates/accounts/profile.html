@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="apple-grid" style="grid-template-columns: 1fr 2fr; gap: 24px;">
+    <!-- Profile Card -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-body" style="text-align: center; padding: 32px 24px;">
+                {% include "components/avatar.html" with user=request.user size="xl" %}
+                <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">{{ user.get_full_name|default:user.username }}</h3>
+                <p style="font-size: 14px; color: var(--apple-text-secondary);">{{ user.email }}</p>
+                {% include "components/badge.html" with text=user.get_role_display|default:"User" type="primary" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Edit Profile</h3>
+            </div>
+            <div class="apple-card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="apple-form-row">
+                        {% include "components/form_field.html" with field=form.first_name label="First Name" %}
+                        {% include "components/form_field.html" with field=form.last_name label="Last Name" %}
+                    </div>
+                    {% include "components/form_field.html" with field=form.email label="Email" %}
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;">
+                        {% include "components/button.html" with text="Save Changes" type="primary" %}
+                        <a href="{% url 'accounts:password_change' %}" class="apple-btn apple-btn-secondary">Change Password</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

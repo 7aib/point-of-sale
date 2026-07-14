@@ -1,0 +1,7 @@
+{% comment %}
+    Usage: {% include "components/badge.html" with text="Admin" type="primary" %}
+    Types: primary, success, warning, danger, neutral
+{% endcomment %}
+<span class="apple-badge apple-badge-{{ type|default:'neutral' }} {% if class %}{{ class }}{% endif %}">
+    {{ text }}
+</span>

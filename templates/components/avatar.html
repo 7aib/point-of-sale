@@ -1,0 +1,12 @@
+{% comment %}
+    Usage: {% include "components/avatar.html" with user=user size="md" %}
+    Sizes: sm (32px), md (40px), lg (56px), xl (80px)
+{% endcomment %}
+{% with initials=user.first_name.0|default:""|add:user.last_name.0|default:"" %}
+<div class="apple-avatar apple-avatar-{{ size|default:'md' }} {% if class %}{{ class }}{% endif %}"
+     {% if user.avatar %}style="background-image: url({{ user.avatar.url }})"{% endif %}>
+    {% if not user.avatar %}
+    <span>{{ initials|upper }}</span>
+    {% endif %}
+</div>
+{% endwith %}

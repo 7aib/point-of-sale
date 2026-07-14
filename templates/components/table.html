@@ -1,0 +1,34 @@
+{% load static %}
+{% comment %}
+    Usage: {% include "components/table.html" with headers=columns rows=items %}
+    headers = list of dicts: [{"key": "name", "label": "Name"}, ...]
+    rows = list of objects with attributes matching keys
+{% endcomment %}
+<div class="apple-table-wrapper">
+    <table class="apple-table">
+        <thead>
+            <tr>
+                {% for col in headers %}
+                <th {% if col.width %}style="width: {{ col.width }}"{% endif %}>{{ col.label }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if rows %}
+                {% for row in rows %}
+                <tr>
+                    {% for col in headers %}
+                    <td>{% firstof row|dictsort:col.key col|dictsort:col.key %}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="{{ headers|length }}">
+                    {% include "components/empty_state.html" with title="No data found" %}
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,15 @@
+{% comment %}
+    Usage: {% include "components/empty_state.html" with title="No products yet" description="Create your first product to get started." action_text="Add Product" action_url="..." %}
+{% endcomment %}
+<div class="apple-empty-state">
+    {% if icon %}
+    <div class="apple-empty-icon">{{ icon }}</div>
+    {% endif %}
+    <h3 class="apple-empty-title">{{ title|default:"Nothing here yet" }}</h3>
+    <p class="apple-empty-desc">{{ description|default:"Get started by creating something new." }}</p>
+    {% if action_url %}
+    <div class="apple-empty-action">
+        {% include "components/button.html" with text=action_text url=action_url type="primary" tag="a" %}
+    </div>
+    {% endif %}
+</div>

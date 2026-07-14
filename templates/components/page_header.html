@@ -1,0 +1,14 @@
+{% comment %}
+    Usage: {% include "components/page_header.html" with title="Products" action_text="Add Product" action_url="..." %}
+{% endcomment %}
+<div class="apple-page-header">
+    <div class="apple-page-header-left">
+        <h1 class="apple-page-title">{{ title }}</h1>
+        {% if subtitle %}<p class="apple-page-subtitle">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if action_url or action_text %}
+    <div class="apple-page-header-right">
+        {% include "components/button.html" with text=action_text url=action_url type="primary" tag="a" icon_left=action_icon %}
+    </div>
+    {% endif %}
+</div>

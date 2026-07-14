@@ -1,0 +1,17 @@
+{% comment %}
+    Usage: {% include "components/stat_card.html" with title="Total Sales" value="Rs 125,000" icon="..." trend="+12%" trend_type="up" %}
+{% endcomment %}
+<div class="apple-stat-card {% if class %}{{ class }}{% endif %}">
+    <div class="apple-stat-icon apple-stat-icon-{{ color|default:'blue' }}">
+        {% if icon %}{{ icon }}{% endif %}
+    </div>
+    <div class="apple-stat-content">
+        <span class="apple-stat-label">{{ title }}</span>
+        <span class="apple-stat-value">{{ value }}</span>
+        {% if trend %}
+        <span class="apple-stat-trend apple-stat-trend-{{ trend_type|default:'up' }}">
+            {% if trend_type == 'up' %}&#8593;{% else %}&#8595;{% endif %} {{ trend }}
+        </span>
+        {% endif %}
+    </div>
+</div>

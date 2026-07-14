@@ -1,0 +1,25 @@
+{% comment %}
+    Usage: {% include "components/modal.html" with id="deleteModal" title="Confirm Delete" %}
+    Then in the modal body block, add your content.
+    Trigger with: data-bs-toggle="modal" data-bs-target="#deleteModal"
+{% endcomment %}
+<div class="apple-modal fade" id="{{ id }}" tabindex="-1" aria-labelledby="{{ id }}Label" aria-hidden="true">
+    <div class="apple-modal-dialog {% if size %}apple-modal-{{ size }}{% endif %}">
+        <div class="apple-modal-content">
+            <div class="apple-modal-header">
+                <h5 class="apple-modal-title" id="{{ id }}Label">{{ title }}</h5>
+                <button type="button" class="apple-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="apple-modal-body">
+                {{ content }}
+            </div>
+            {% if footer %}
+            <div class="apple-modal-footer">
+                {{ footer }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+{% comment %}
+    Usage: {% include "components/button.html" with text="Save" type="primary" tag="button" %}
+    Types: primary, secondary, danger, ghost
+    Sizes: sm, md (default)
+    Tags: button, a
+{% endcomment %}
+{% if tag == "a" %}
+<a href="{{ url|default:'#' }}"
+   class="apple-btn apple-btn-{{ type|default:'primary' }} {% if size %}apple-btn-{{ size }}{% endif %} {% if class %}{{ class }}{% endif %}"
+   {% if disabled %}disabled{% endif %}>
+    {% if icon_left %}{{ icon_left }}{% endif %}
+    {{ text }}
+    {% if icon_right %}{{ icon_right }}{% endif %}
+</a>
+{% else %}
+<button type="{{ button_type|default:'submit' }}"
+        class="apple-btn apple-btn-{{ type|default:'primary' }} {% if size %}apple-btn-{{ size }}{% endif %} {% if class %}{{ class }}{% endif %}"
+        {% if name %}name="{{ name }}"{% endif %}
+        {% if disabled %}disabled{% endif %}>
+    {% if icon_left %}{{ icon_left }}{% endif %}
+    {{ text }}
+    {% if icon_right %}{{ icon_right }}{% endif %}
+</button>
+{% endif %}

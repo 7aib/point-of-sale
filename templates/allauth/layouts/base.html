@@ -1,0 +1,17 @@
+{% extends "accounts/base_accounts.html" %}
+
+{% block title %}{% block head_title %}{{ PROJECT_NAME }}{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content_inner %}{% endblock content_inner %}
+    </div>
+</div>
+{% endblock content %}

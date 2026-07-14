@@ -1,0 +1,20 @@
+{% comment %}
+    Usage: {% include "components/card.html" with title="Card Title" body="content" %}
+    Or use block syntax for complex content:
+    {% include "components/card.html" with title="Card Title" %}
+        <p>Complex content here</p>
+    {% endinclude %}
+{% endcomment %}
+<div class="apple-card {% if class %}{{ class }}{% endif %}">
+    {% if title %}
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">{{ title }}</h3>
+        {% if subtitle %}<p class="apple-card-subtitle">{{ subtitle }}</p>{% endif %}
+        {% if header_action %}<div class="apple-card-action">{{ header_action }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="apple-card-body">
+        {% if body %}{{ body }}{% endif %}
+        {{ content }}
+    </div>
+</div>
