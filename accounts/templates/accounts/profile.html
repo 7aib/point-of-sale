@@ -12,7 +12,10 @@
                 {% include "components/avatar.html" with user=request.user size="xl" %}
                 <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">{{ user.get_full_name|default:user.username }}</h3>
                 <p style="font-size: 14px; color: var(--apple-text-secondary);">{{ user.email }}</p>
-                {% include "components/badge.html" with text=user.get_role_display|default:"User" type="primary" %}
+                {% include "components/badge.html" with text=user.get_role_display type="primary" %}
+                {% if user.phone_number %}
+                <p style="font-size: 13px; color: var(--apple-text-secondary); margin-top: 12px;">{{ user.phone_number }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -31,6 +34,7 @@
                         {% include "components/form_field.html" with field=form.last_name label="Last Name" %}
                     </div>
                     {% include "components/form_field.html" with field=form.email label="Email" %}
+                    {% include "components/form_field.html" with field=form.phone_number label="Phone Number" %}
                     <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;">
                         {% include "components/button.html" with text="Save Changes" type="primary" %}
                         <a href="{% url 'accounts:password_change' %}" class="apple-btn apple-btn-secondary">Change Password</a>

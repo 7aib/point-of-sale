@@ -1,6 +1,3 @@
-"""
-Django settings for point_of_sale project.
-"""
 import os
 from pathlib import Path
 
@@ -160,6 +157,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 # =============================================================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# =============================================================================
+# Custom User Model
+# =============================================================================
+AUTH_USER_MODEL = 'accounts.User'
 
 # =============================================================================
 # Email (console backend for development — prints to terminal)
