@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Inventory Dashboard{% endblock %}
+
+{% block topbar_right %}
+    {% url 'inventory:stock_adjust' as adjust_url %}
+    {% include "components/button.html" with text="+ Adjust Stock" type="primary" tag="a" url=adjust_url %}
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="apple-grid apple-grid-4" style="margin-bottom: 24px;">
+    {% include "components/stat_card.html" with title="Total Products" value=total_products color="blue" %}
+    {% include "components/stat_card.html" with title="Low Stock" value=low_stock_count color="orange" %}
+    {% include "components/stat_card.html" with title="Out of Stock" value=out_of_stock_count color="red" %}
+    {% include "components/stat_card.html" with title="Pending Alerts" value=pending_alerts_count color="purple" %}
+</div>
+
+<!-- Quick Actions -->
+<div class="apple-grid apple-grid-3" style="margin-bottom: 24px;">
+    <a href="{% url 'inventory:stock_adjust' %}" class="apple-card" style="text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="apple-card-body" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(0,113,227,0.1); display: flex; align-items: center; justify-content: center; color: var(--apple-blue); font-size: 24px;">&#8635;</div>
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Adjust Stock</h3>
+                <p style="font-size: 13px; color: var(--apple-text-secondary); margin: 2px 0 0;">Add, remove, or adjust inventory</p>
+            </div>
+        </div>
+    </a>
+    <a href="{% url 'inventory:movement_list' %}" class="apple-card" style="text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="apple-card-body" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(34,197,94,0.1); display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 24px;">&#128203;</div>
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Stock Movements</h3>
+                <p style="font-size: 13px; color: var(--apple-text-secondary); margin: 2px 0 0;">View all stock history</p>
+            </div>
+        </div>
+    </a>
+    <a href="{% url 'inventory:alert_list' %}" class="apple-card" style="text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="apple-card-body" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(220,38,38,0.1); display: flex; align-items: center; justify-content: center; color: #dc2626; font-size: 24px;">&#9888;</div>
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Low Stock Alerts</h3>
+                <p style="font-size: 13px; color: var(--apple-text-secondary); margin: 2px 0 0;">{{ pending_alerts_count }} pending alerts</p>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Low Stock Products -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">Low Stock Products</h3>
+        {% include "components/badge.html" with text=low_stock_count type="warning" %}
+    </div>
+    <div class="apple-card-body" style="padding: 0;">
+        {% if low_stock_products %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Current Stock</th>
+                        <th>Threshold</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in low_stock_products %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ product.name }}</td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ product.sku }}</td>
+                        <td>
+                            <span style="font-weight: 600; color: #d97706;">{{ product.stock_quantity }}</span>
+                        </td>
+                        <td>{{ product.low_stock_threshold }}</td>
+                        <td>{% include "components/badge.html" with text="Low Stock" type="warning" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding: 32px; text-align: center; color: var(--apple-text-secondary);">
+            All products are well stocked.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Out of Stock Products -->
+<div class="apple-card">
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">Out of Stock Products</h3>
+        {% include "components/badge.html" with text=out_of_stock_count type="danger" %}
+    </div>
+    <div class="apple-card-body" style="padding: 0;">
+        {% if out_of_stock_products %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in out_of_stock_products %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ product.name }}</td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ product.sku }}</td>
+                        <td>{{ product.category.name }}</td>
+                        <td>{% include "components/badge.html" with text="Out of Stock" type="danger" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding: 32px; text-align: center; color: var(--apple-text-secondary);">
+            No products are out of stock.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

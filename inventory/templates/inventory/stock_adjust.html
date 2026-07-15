@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Adjust Stock - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Adjust Stock{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'inventory:movement_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Movements</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 640px;">
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">Stock Adjustment</h3>
+    </div>
+    <div class="apple-card-body">
+        <div style="background: rgba(0,113,227,0.06); border-radius: var(--apple-radius-sm); padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: var(--apple-text-secondary); line-height: 1.5;">
+            <strong style="color: var(--apple-text);">How it works:</strong><br>
+            Enter a <strong>positive number</strong> to add stock (e.g. received shipment).<br>
+            Enter a <strong>negative number</strong> to remove stock (e.g. manual correction).
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% include "components/form_field.html" with field=form.product label="Product" %}
+            {% include "components/form_field.html" with field=form.movement_type label="Movement Type" %}
+            {% include "components/form_field.html" with field=form.quantity label="Quantity (+IN / -OUT)" %}
+            {% include "components/form_field.html" with field=form.reference label="Reference" %}
+            {% include "components/form_field.html" with field=form.notes label="Notes" %}
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Apply Adjustment" type="primary" %}
+                <a href="{% url 'inventory:movement_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

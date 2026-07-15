@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('products/', include('products.urls')),
+    path('inventory/', include('inventory.urls')),
     path('', RedirectView.as_view(url=reverse_lazy('accounts:login')), name='home'),
     path('', include('allauth.urls')),
 ]

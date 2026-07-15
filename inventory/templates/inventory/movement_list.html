@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Movements - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Stock Movements{% endblock %}
+
+{% block topbar_right %}
+    {% url 'inventory:stock_adjust' as adjust_url %}
+    {% include "components/button.html" with text="+ Adjust Stock" type="primary" tag="a" url=adjust_url %}
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by product, SKU, or reference..."
+                   style="flex: 1; min-width: 200px; padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+
+            <select name="type" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none; background: #fff;">
+                <option value="">All Types</option>
+                <option value="received" {% if movement_type == "received" %}selected{% endif %}>Received</option>
+                <option value="sold" {% if movement_type == "sold" %}selected{% endif %}>Sold</option>
+                <option value="adjustment" {% if movement_type == "adjustment" %}selected{% endif %}>Adjustment</option>
+                <option value="returned" {% if movement_type == "returned" %}selected{% endif %}>Returned</option>
+                <option value="damaged" {% if movement_type == "damaged" %}selected{% endif %}>Damaged</option>
+                <option value="transfer" {% if movement_type == "transfer" %}selected{% endif %}>Transfer</option>
+            </select>
+
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Filter</button>
+            {% if search or movement_type %}
+            <a href="{% url 'inventory:movement_list' %}" class="apple-btn apple-btn-ghost apple-btn-sm">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Movements Table -->
+<div class="apple-card">
+    <div class="apple-card-body" style="padding: 0;">
+        {% if movements %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}&search={{ search }}&type={{ movement_type }}" style="text-decoration:none;color:inherit;">
+                                Date {% if sort == "created_at" %}&#9650;{% elif sort == "-created_at" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>
+                            <a href="?sort={% if sort == 'quantity' %}-quantity{% else %}quantity{% endif %}&search={{ search }}&type={{ movement_type }}" style="text-decoration:none;color:inherit;">
+                                Qty {% if sort == "quantity" %}&#9650;{% elif sort == "-quantity" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Running Stock</th>
+                        <th>Reference</th>
+                        <th>By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movements %}
+                    <tr>
+                        <td style="font-size: 13px; color: var(--apple-text-secondary);">{{ m.created_at|date:"M d, Y H:i" }}</td>
+                        <td style="font-weight: 500;">{{ m.product.name }}</td>
+                        <td>
+                            {% if m.movement_type == "received" %}
+                            {% include "components/badge.html" with text="Received" type="success" %}
+                            {% elif m.movement_type == "sold" %}
+                            {% include "components/badge.html" with text="Sold" type="primary" %}
+                            {% elif m.movement_type == "adjustment" %}
+                            {% include "components/badge.html" with text="Adjustment" type="warning" %}
+                            {% elif m.movement_type == "returned" %}
+                            {% include "components/badge.html" with text="Returned" type="neutral" %}
+                            {% elif m.movement_type == "damaged" %}
+                            {% include "components/badge.html" with text="Damaged" type="danger" %}
+                            {% elif m.movement_type == "transfer" %}
+                            {% include "components/badge.html" with text="Transfer" type="neutral" %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if m.quantity > 0 %}
+                            <span style="font-weight: 600; color: #16a34a;">+{{ m.quantity }}</span>
+                            {% else %}
+                            <span style="font-weight: 600; color: #dc2626;">{{ m.quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ m.running_stock }}</td>
+                        <td style="font-size: 13px;">{{ m.reference|default:"-" }}</td>
+                        <td style="font-size: 13px;">{{ m.performed_by|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if movements.has_other_pages %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+            <span style="font-size: 13px; color: var(--apple-text-secondary);">
+                Showing {{ movements.start_index }}-{{ movements.end_index }} of {{ movements.paginator.count }}
+            </span>
+            <div style="display: flex; gap: 4px;">
+                {% if movements.has_previous %}
+                <a href="?page={{ movements.previous_page_number }}&search={{ search }}&type={{ movement_type }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">&laquo; Prev</a>
+                {% endif %}
+                {% for num in movements.paginator.page_range %}
+                <a href="?page={{ num }}&search={{ search }}&type={{ movement_type }}&sort={{ sort }}"
+                   class="apple-btn {% if movements.number == num %}apple-btn-primary{% else %}apple-btn-secondary{% endif %} apple-btn-sm">{{ num }}</a>
+                {% endfor %}
+                {% if movements.has_next %}
+                <a href="?page={{ movements.next_page_number }}&search={{ search }}&type={{ movement_type }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        {% include "components/empty_state.html" with title="No movements recorded" description="Stock movements will appear here when you adjust inventory." %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
