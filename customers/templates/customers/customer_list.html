@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Customers - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block topbar_right %}
+    {% url 'customers:customer_create' as add_url %}
+    {% include "components/button.html" with text="+ Add Customer" type="primary" tag="a" url=add_url %}
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by name, email, or phone..."
+                   style="flex: 1; min-width: 200px; padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Search</button>
+            {% if search %}
+            <a href="{% url 'customers:customer_list' %}" class="apple-btn apple-btn-ghost apple-btn-sm">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="apple-card">
+    <div class="apple-card-body" style="padding: 0;">
+        {% if customers %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort == 'first_name' %}-first_name{% else %}first_name{% endif %}&search={{ search }}" style="text-decoration:none;color:inherit;">
+                                Name {% if sort == "first_name" %}&#9650;{% elif sort == "-first_name" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Phone</th>
+                        <th>
+                            <a href="?sort={% if sort == 'email' %}-email{% else %}email{% endif %}&search={{ search }}" style="text-decoration:none;color:inherit;">
+                                Email {% if sort == "email" %}&#9650;{% elif sort == "-email" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>City</th>
+                        <th>Orders</th>
+                        <th>Total Spent</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="apple-avatar apple-avatar-md">
+                                    <span>{{ customer.first_name.0 }}{% if customer.last_name %}{{ customer.last_name.0 }}{% endif %}</span>
+                                </div>
+                                <a href="{% url 'customers:customer_detail' pk=customer.pk %}" style="font-weight: 500; color: var(--apple-text); text-decoration: none;">{{ customer.full_name }}</a>
+                            </div>
+                        </td>
+                        <td style="font-size: 13px;">{{ customer.phone|default:"-" }}</td>
+                        <td style="font-size: 13px;">{{ customer.email|default:"-" }}</td>
+                        <td>{{ customer.city|default:"-" }}</td>
+                        <td>{{ customer.total_orders }}</td>
+                        <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ customer.total_spent|floatformat:0 }}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <a href="{% url 'customers:customer_detail' pk=customer.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="View">&#128065;</a>
+                                <a href="{% url 'customers:customer_update' pk=customer.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="Edit">&#9998;</a>
+                                <form method="post" action="{% url 'customers:customer_delete' pk=customer.pk %}" style="margin:0;" onsubmit="return confirm('Delete this customer?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;" title="Delete">&#128465;</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if customers.has_other_pages %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+            <span style="font-size: 13px; color: var(--apple-text-secondary);">
+                Showing {{ customers.start_index }}-{{ customers.end_index }} of {{ customers.paginator.count }}
+            </span>
+            <div style="display: flex; gap: 4px;">
+                {% if customers.has_previous %}
+                <a href="?page={{ customers.previous_page_number }}&search={{ search }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">&laquo; Prev</a>
+                {% endif %}
+                {% for num in customers.paginator.page_range %}
+                <a href="?page={{ num }}&search={{ search }}&sort={{ sort }}"
+                   class="apple-btn {% if customers.number == num %}apple-btn-primary{% else %}apple-btn-secondary{% endif %} apple-btn-sm">{{ num }}</a>
+                {% endfor %}
+                {% if customers.has_next %}
+                <a href="?page={{ customers.next_page_number }}&search={{ search }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        {% include "components/empty_state.html" with title="No customers yet" description="Add your first customer to start tracking their purchases." action_text="Add Customer" action_url="/customers/add/" %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

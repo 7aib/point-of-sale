@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.full_name }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ customer.full_name }}{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'customers:customer_update' pk=customer.pk %}" class="apple-btn apple-btn-secondary apple-btn-sm">Edit</a>
+        <form method="post" action="{% url 'customers:customer_delete' pk=customer.pk %}" style="margin:0;" onsubmit="return confirm('Delete this customer?');">
+            {% csrf_token %}
+            <button type="submit" class="apple-btn apple-btn-danger apple-btn-sm">Delete</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="apple-grid" style="grid-template-columns: 1fr 2fr; gap: 24px;">
+    <!-- Profile Card -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-body" style="text-align: center; padding: 32px 24px;">
+                <div class="apple-avatar apple-avatar-xl" style="margin: 0 auto 16px;">
+                    <span>{{ customer.first_name.0 }}{% if customer.last_name %}{{ customer.last_name.0 }}{% endif %}</span>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">{{ customer.full_name }}</h3>
+                <p style="font-size: 14px; color: var(--apple-text-secondary);">{{ customer.email|default:"No email" }}</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+            <div class="apple-stat-card">
+                <div class="apple-stat-content">
+                    <span class="apple-stat-label">Total Orders</span>
+                    <span class="apple-stat-value" style="font-size: 20px;">{{ customer.total_orders }}</span>
+                </div>
+            </div>
+            <div class="apple-stat-card">
+                <div class="apple-stat-content">
+                    <span class="apple-stat-label">Total Spent</span>
+                    <span class="apple-stat-value" style="font-size: 20px;">{{ STORE_CURRENCY_SYMBOL }} {{ customer.total_spent|floatformat:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="apple-card" style="margin-top: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Contact Info</h3>
+            </div>
+            <div class="apple-card-body">
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Phone</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ customer.phone|default:"-" }}</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Email</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ customer.email|default:"-" }}</p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">City</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ customer.city|default:"-" }}</p>
+                </div>
+                <div>
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Address</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ customer.address|default:"-" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase History -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Purchase History</h3>
+                {% include "components/badge.html" with text=customer.total_orders|add:" orders" type="neutral" %}
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                {% if orders %}
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'customers:order_detail' pk=order.pk %}" style="font-weight: 500; color: var(--apple-blue); text-decoration: none; font-family: monospace; font-size: 13px;">{{ order.order_number }}</a>
+                                </td>
+                                <td style="font-size: 13px;">{{ order.created_at|date:"M d, Y" }}</td>
+                                <td>{{ order.items.count }}</td>
+                                <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ order.total_amount|floatformat:0 }}</td>
+                                <td>
+                                    {% if order.payment_method == "cash" %}
+                                    {% include "components/badge.html" with text="Cash" type="success" %}
+                                    {% elif order.payment_method == "card" %}
+                                    {% include "components/badge.html" with text="Card" type="primary" %}
+                                    {% elif order.payment_method == "credit" %}
+                                    {% include "components/badge.html" with text="Credit" type="warning" %}
+                                    {% else %}
+                                    {% include "components/badge.html" with text=order.get_payment_method_display type="neutral" %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.status == "completed" %}
+                                    {% include "components/badge.html" with text="Completed" type="success" %}
+                                    {% elif order.status == "pending" %}
+                                    {% include "components/badge.html" with text="Pending" type="warning" %}
+                                    {% elif order.status == "cancelled" %}
+                                    {% include "components/badge.html" with text="Cancelled" type="danger" %}
+                                    {% elif order.status == "refunded" %}
+                                    {% include "components/badge.html" with text="Refunded" type="neutral" %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="padding: 48px; text-align: center; color: var(--apple-text-secondary);">
+                    <p style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">No orders yet</p>
+                    <p style="font-size: 14px;">Purchase history will appear here.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Notes -->
+        {% if customer.notes %}
+        <div class="apple-card" style="margin-top: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Notes</h3>
+            </div>
+            <div class="apple-card-body">
+                <p style="font-size: 14px; line-height: 1.6;">{{ customer.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Meta -->
+        <div style="margin-top: 16px; font-size: 13px; color: var(--apple-text-secondary);">
+            <p>Customer since: {{ customer.created_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

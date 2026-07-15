@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'customers:customer_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Customers</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 640px;">
+    <div class="apple-card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.first_name label="First Name" %}
+                {% include "components/form_field.html" with field=form.last_name label="Last Name" %}
+            </div>
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.email label="Email" %}
+                {% include "components/form_field.html" with field=form.phone label="Phone" %}
+            </div>
+
+            {% include "components/form_field.html" with field=form.city label="City" %}
+            {% include "components/form_field.html" with field=form.address label="Address" %}
+            {% include "components/form_field.html" with field=form.notes label="Notes" %}
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Save Customer" type="primary" %}
+                <a href="{% url 'customers:customer_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Order {{ order.order_number }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'customers:customer_detail' pk=order.customer.pk %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Customer</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Order Items -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Order Items</h3>
+            {% if order.status == "completed" %}
+            {% include "components/badge.html" with text="Completed" type="success" %}
+            {% elif order.status == "pending" %}
+            {% include "components/badge.html" with text="Pending" type="warning" %}
+            {% elif order.status == "cancelled" %}
+            {% include "components/badge.html" with text="Cancelled" type="danger" %}
+            {% elif order.status == "refunded" %}
+            {% include "components/badge.html" with text="Refunded" type="neutral" %}
+            {% endif %}
+        </div>
+        <div class="apple-card-body" style="padding: 0;">
+            <div class="apple-table-wrapper">
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ item.product.name }}</td>
+                            <td>{{ STORE_CURRENCY_SYMBOL }} {{ item.unit_price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ item.total_price }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Order Summary</h3>
+            </div>
+            <div class="apple-card-body">
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Customer</p>
+                    <a href="{% url 'customers:customer_detail' pk=order.customer.pk %}" style="font-size: 14px; font-weight: 500; color: var(--apple-blue); text-decoration: none;">{{ order.customer.full_name }}</a>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Date</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ order.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Payment Method</p>
+                    <p style="font-size: 14px; font-weight: 500;">{{ order.get_payment_method_display }}</p>
+                </div>
+
+                <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Subtotal</span>
+                        <span style="font-size: 14px;">{{ STORE_CURRENCY_SYMBOL }} {{ order.subtotal }}</span>
+                    </div>
+                    {% if order.tax_amount > 0 %}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Tax</span>
+                        <span style="font-size: 14px;">{{ STORE_CURRENCY_SYMBOL }} {{ order.tax_amount }}</span>
+                    </div>
+                    {% endif %}
+                    {% if order.discount_amount > 0 %}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Discount</span>
+                        <span style="font-size: 14px; color: #dc2626;">-{{ STORE_CURRENCY_SYMBOL }} {{ order.discount_amount }}</span>
+                    </div>
+                    {% endif %}
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.06);">
+                        <span style="font-size: 16px; font-weight: 600;">Total</span>
+                        <span style="font-size: 16px; font-weight: 700;">{{ STORE_CURRENCY_SYMBOL }} {{ order.total_amount }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if order.notes %}
+        <div class="apple-card" style="margin-top: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Notes</h3>
+            </div>
+            <div class="apple-card-body">
+                <p style="font-size: 14px; line-height: 1.6;">{{ order.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 16px; font-size: 13px; color: var(--apple-text-secondary);">
+            {% if order.performed_by %}
+            <p>Served by: {{ order.performed_by.get_full_name|default:order.performed_by.username }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
