@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="{% url 'products:product_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Products</a>
+        {% url 'products:category_create' as add_url %}
+        {% include "components/button.html" with text="+ Add Category" type="primary" tag="a" url=add_url %}
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card">
+    <div class="apple-card-body" style="padding: 0;">
+        {% if categories %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Slug</th>
+                        <th>Products</th>
+                        <th>Subcategories</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <!-- Parent -->
+                    <tr>
+                        <td>
+                            <span style="font-weight: 600;">{{ category.name }}</span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ category.slug }}</td>
+                        <td>{{ category.products.count }}</td>
+                        <td>{{ category.children.count }}</td>
+                        <td>
+                            {% if category.is_active %}
+                            {% include "components/badge.html" with text="Active" type="success" %}
+                            {% else %}
+                            {% include "components/badge.html" with text="Inactive" type="neutral" %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <a href="{% url 'products:category_update' slug=category.slug %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="Edit">&#9998;</a>
+                                <form method="post" action="{% url 'products:category_delete' slug=category.slug %}" style="margin:0;" onsubmit="return confirm('Delete this category?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;" title="Delete">&#128465;</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Children -->
+                    {% for child in category.children.all %}
+                    <tr>
+                        <td style="padding-left: 40px;">
+                            <span style="color: var(--apple-text-secondary);">&#8627;</span>
+                            <span style="font-weight: 500;">{{ child.name }}</span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ child.slug }}</td>
+                        <td>{{ child.products.count }}</td>
+                        <td>{{ child.children.count }}</td>
+                        <td>
+                            {% if child.is_active %}
+                            {% include "components/badge.html" with text="Active" type="success" %}
+                            {% else %}
+                            {% include "components/badge.html" with text="Inactive" type="neutral" %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <a href="{% url 'products:category_update' slug=child.slug %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="Edit">&#9998;</a>
+                                <form method="post" action="{% url 'products:category_delete' slug=child.slug %}" style="margin:0;" onsubmit="return confirm('Delete this category?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;" title="Delete">&#128465;</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        {% url 'products:category_create' as empty_action_url %}
+        {% include "components/empty_state.html" with title="No categories yet" description="Create your first category to organize products." action_text="Add Category" action_url=empty_action_url %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

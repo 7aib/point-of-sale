@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'products:category_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Categories</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 640px;">
+    <div class="apple-card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% include "components/form_field.html" with field=form.name label="Category Name" %}
+            {% include "components/form_field.html" with field=form.slug label="Slug" %}
+            {% include "components/form_field.html" with field=form.description label="Description" %}
+            {% include "components/form_field.html" with field=form.parent label="Parent Category" %}
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.sort_order label="Sort Order" %}
+                <div style="display: flex; align-items: flex-end; padding-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" style="font-size: 14px; font-weight: 500; color: var(--apple-text);">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Save Category" type="primary" %}
+                <a href="{% url 'products:category_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

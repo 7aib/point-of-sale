@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'products:product_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Products</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card">
+    <div class="apple-card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Basic Info -->
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--apple-text);">Basic Information</h3>
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.name label="Product Name" %}
+                {% include "components/form_field.html" with field=form.slug label="Slug" %}
+            </div>
+            {% include "components/form_field.html" with field=form.description label="Description" %}
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.sku label="SKU" %}
+                {% include "components/form_field.html" with field=form.barcode label="Barcode" %}
+            </div>
+
+            {% include "components/form_field.html" with field=form.category label="Category" %}
+
+            <!-- Pricing & Stock -->
+            <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px; color: var(--apple-text);">Pricing & Stock</h3>
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.cost_price label="Cost Price" %}
+                {% include "components/form_field.html" with field=form.selling_price label="Selling Price" %}
+            </div>
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.stock_quantity label="Stock Quantity" %}
+                {% include "components/form_field.html" with field=form.low_stock_threshold label="Low Stock Threshold" %}
+            </div>
+            {% include "components/form_field.html" with field=form.tax_rate label="Tax Rate (%)" %}
+
+            <!-- Image & Status -->
+            <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px; color: var(--apple-text);">Image & Status</h3>
+            {% include "components/form_field.html" with field=form.image label="Product Image" %}
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" style="font-size: 14px; font-weight: 500; color: var(--apple-text);">Active</label>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Save Product" type="primary" %}
+                <a href="{% url 'products:product_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

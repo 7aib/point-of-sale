@@ -5,3 +5,4 @@ crispy-bootstrap5>=2024.0
 requests
 PyJWT
 cryptography
+Pillow
