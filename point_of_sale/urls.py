@@ -11,6 +11,7 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('customers/', include('customers.urls')),
     path('discounts/', include('discounts.urls')),
+    path('sales/', include('sales.urls')),
     path('', RedirectView.as_view(url=reverse_lazy('accounts:login')), name='home'),
     path('', include('allauth.urls')),
 ]

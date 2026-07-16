@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Dashboard - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Sales Dashboard{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'sales:quick_sale' %}" class="apple-btn apple-btn-primary apple-btn-sm">+ Quick Sale</a>
+        <a href="{% url 'sales:order_create' %}" class="apple-btn apple-btn-secondary apple-btn-sm">+ New Order</a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+    <div class="apple-stat-card">
+        <div class="apple-stat-content">
+            <span class="apple-stat-label">Today's Revenue</span>
+            <span class="apple-stat-value">{{ STORE_CURRENCY_SYMBOL }} {{ today_revenue|floatformat:0 }}</span>
+            <span class="apple-stat-desc">{{ today_count }} orders today</span>
+        </div>
+    </div>
+    <div class="apple-stat-card">
+        <div class="apple-stat-content">
+            <span class="apple-stat-label">This Month</span>
+            <span class="apple-stat-value">{{ STORE_CURRENCY_SYMBOL }} {{ month_revenue|floatformat:0 }}</span>
+            <span class="apple-stat-desc">{{ month_count }} orders this month</span>
+        </div>
+    </div>
+    <div class="apple-stat-card">
+        <div class="apple-stat-content">
+            <span class="apple-stat-label">Total Revenue</span>
+            <span class="apple-stat-value">{{ STORE_CURRENCY_SYMBOL }} {{ total_revenue|floatformat:0 }}</span>
+            <span class="apple-stat-desc">{{ total_orders }} total orders</span>
+        </div>
+    </div>
+    <div class="apple-stat-card">
+        <div class="apple-stat-content">
+            <span class="apple-stat-label">Pending Payments</span>
+            <span class="apple-stat-value" style="color: {% if pending_orders %}#f59e0b{% else %}inherit{% endif %};">{{ pending_orders|length }}</span>
+            <span class="apple-stat-desc">orders with balance</span>
+        </div>
+    </div>
+</div>
+
+<div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Recent Orders -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Recent Orders</h3>
+            <a href="{% url 'sales:order_list' %}" class="apple-btn apple-btn-ghost apple-btn-sm">View All</a>
+        </div>
+        <div class="apple-card-body" style="padding: 0;">
+            {% if recent_orders %}
+            <div class="apple-table-wrapper">
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'sales:order_detail' pk=order.pk %}" style="font-weight: 500; color: var(--apple-blue); text-decoration: none; font-family: monospace; font-size: 13px;">{{ order.order_number }}</a>
+                            </td>
+                            <td>{{ order.customer.full_name }}</td>
+                            <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ order.total_amount|floatformat:0 }}</td>
+                            <td>
+                                {% if order.status == "completed" %}
+                                {% include "components/badge.html" with text="Completed" type="success" %}
+                                {% elif order.status == "pending" %}
+                                {% include "components/badge.html" with text="Pending" type="warning" %}
+                                {% elif order.status == "cancelled" %}
+                                {% include "components/badge.html" with text="Cancelled" type="danger" %}
+                                {% elif order.status == "refunded" %}
+                                {% include "components/badge.html" with text="Refunded" type="neutral" %}
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 13px;">{{ order.created_at|date:"M d, H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 48px; text-align: center; color: var(--apple-text-secondary);">
+                <p>No orders yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div>
+        <!-- Pending Payments -->
+        {% if pending_orders %}
+        <div class="apple-card" style="margin-bottom: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Pending Payments</h3>
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in pending_orders %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'sales:order_detail' pk=order.pk %}" style="font-weight: 500; color: var(--apple-blue); text-decoration: none; font-family: monospace; font-size: 12px;">{{ order.order_number }}</a>
+                                </td>
+                                <td style="font-weight: 600; color: #f59e0b;">
+                                    {{ STORE_CURRENCY_SYMBOL }} {% widthratio order.total_amount 1 1 %}?
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Top Products -->
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Top Products</h3>
+            </div>
+            <div class="apple-card-body">
+                {% for product in top_products %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; {% if not forloop.last %}border-bottom: 1px solid rgba(0,0,0,0.04);{% endif %}">
+                    <div>
+                        <p style="font-size: 14px; font-weight: 500;">{{ product.name }}</p>
+                        <p style="font-size: 12px; color: var(--apple-text-secondary);">{{ product.sku }}</p>
+                    </div>
+                    <span style="font-size: 14px; font-weight: 600;">{{ product.sold }} sold</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

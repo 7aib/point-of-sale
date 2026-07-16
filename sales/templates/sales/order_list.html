@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Orders{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'sales:quick_sale' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Quick Sale</a>
+        <a href="{% url 'sales:order_create' %}" class="apple-btn apple-btn-primary apple-btn-sm">+ New Order</a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by order # or customer..."
+                   style="flex: 1; min-width: 200px; padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+
+            <select name="status" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+                <option value="">All Status</option>
+                <option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if status == "completed" %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if status == "cancelled" %}selected{% endif %}>Cancelled</option>
+                <option value="refunded" {% if status == "refunded" %}selected{% endif %}>Refunded</option>
+            </select>
+
+            <select name="payment_method" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+                <option value="">All Payment</option>
+                <option value="cash" {% if payment_method == "cash" %}selected{% endif %}>Cash</option>
+                <option value="card" {% if payment_method == "card" %}selected{% endif %}>Card</option>
+                <option value="bank_transfer" {% if payment_method == "bank_transfer" %}selected{% endif %}>Bank Transfer</option>
+                <option value="credit" {% if payment_method == "credit" %}selected{% endif %}>Credit</option>
+            </select>
+
+            <input type="date" name="date_from" value="{{ date_from }}" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+            <input type="date" name="date_to" value="{{ date_to }}" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Filter</button>
+            {% if search or status or payment_method or date_from or date_to %}
+            <a href="{% url 'sales:order_list' %}" class="apple-btn apple-btn-ghost apple-btn-sm">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Summary -->
+<div style="display: flex; gap: 24px; margin-bottom: 16px; font-size: 14px; color: var(--apple-text-secondary);">
+    <span>{{ orders.paginator.count }} orders found</span>
+    <span>Total: <strong style="color: var(--apple-text);">{{ STORE_CURRENCY_SYMBOL }} {{ total_amount|floatformat:0 }}</strong></span>
+</div>
+
+<!-- Orders Table -->
+<div class="apple-card">
+    <div class="apple-card-body" style="padding: 0;">
+        {% if orders %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort == 'order_number' %}-order_number{% else %}order_number{% endif %}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}" style="text-decoration:none;color:inherit;">
+                                Order # {% if sort == "order_number" %}&#9650;{% elif sort == "-order_number" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>
+                            <a href="?sort={% if sort == 'total_amount' %}-total_amount{% else %}total_amount{% endif %}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}" style="text-decoration:none;color:inherit;">
+                                Total {% if sort == "total_amount" %}&#9650;{% elif sort == "-total_amount" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>
+                            <a href="?sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}" style="text-decoration:none;color:inherit;">
+                                Date {% if sort == "created_at" %}&#9650;{% elif sort == "-created_at" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'sales:order_detail' pk=order.pk %}" style="font-weight: 500; color: var(--apple-blue); text-decoration: none; font-family: monospace; font-size: 13px;">{{ order.order_number }}</a>
+                        </td>
+                        <td>{{ order.customer.full_name }}</td>
+                        <td>{{ order.items.count }}</td>
+                        <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ order.total_amount|floatformat:0 }}</td>
+                        <td>
+                            {% if order.payment_method == "cash" %}
+                            {% include "components/badge.html" with text="Cash" type="success" %}
+                            {% elif order.payment_method == "card" %}
+                            {% include "components/badge.html" with text="Card" type="primary" %}
+                            {% elif order.payment_method == "credit" %}
+                            {% include "components/badge.html" with text="Credit" type="warning" %}
+                            {% else %}
+                            {% include "components/badge.html" with text=order.get_payment_method_display type="neutral" %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.status == "completed" %}
+                            {% include "components/badge.html" with text="Completed" type="success" %}
+                            {% elif order.status == "pending" %}
+                            {% include "components/badge.html" with text="Pending" type="warning" %}
+                            {% elif order.status == "cancelled" %}
+                            {% include "components/badge.html" with text="Cancelled" type="danger" %}
+                            {% elif order.status == "refunded" %}
+                            {% include "components/badge.html" with text="Refunded" type="neutral" %}
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 13px;">{{ order.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <a href="{% url 'sales:order_detail' pk=order.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="View">&#128065;</a>
+                                <a href="{% url 'sales:order_update' pk=order.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="Edit">&#9998;</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if orders.has_other_pages %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+            <span style="font-size: 13px; color: var(--apple-text-secondary);">
+                Showing {{ orders.start_index }}-{{ orders.end_index }} of {{ orders.paginator.count }}
+            </span>
+            <div style="display: flex; gap: 4px;">
+                {% if orders.has_previous %}
+                <a href="?page={{ orders.previous_page_number }}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">&laquo; Prev</a>
+                {% endif %}
+                {% for num in orders.paginator.page_range %}
+                <a href="?page={{ num }}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}&sort={{ sort }}"
+                   class="apple-btn {% if orders.number == num %}apple-btn-primary{% else %}apple-btn-secondary{% endif %} apple-btn-sm">{{ num }}</a>
+                {% endfor %}
+                {% if orders.has_next %}
+                <a href="?page={{ orders.next_page_number }}&search={{ search }}&status={{ status }}&payment_method={{ payment_method }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        {% include "components/empty_state.html" with title="No orders yet" description="Create your first order to start tracking sales." action_text="New Order" action_url="/sales/orders/create/" %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

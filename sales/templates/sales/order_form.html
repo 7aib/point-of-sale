@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'sales:order_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Orders</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+        <!-- Order Items -->
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Order Items</h3>
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                {{ formset.management_form }}
+                <div class="apple-table-wrapper">
+                    <table class="apple-table" id="order-items">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Unit Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item_form in formset %}
+                            <tr class="order-item-row">
+                                <td>{{ item_form.product }}</td>
+                                <td>{{ item_form.unit_price }}</td>
+                                <td>{{ item_form.quantity }}</td>
+                                <td class="item-total" style="font-weight: 600;">-</td>
+                                <td>
+                                    {{ item_form.DELETE }}
+                                    {{ item_form.id }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding: 12px 24px;">
+                    <button type="button" id="add-item" class="apple-btn apple-btn-ghost apple-btn-sm">+ Add Item</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details -->
+        <div>
+            <div class="apple-card">
+                <div class="apple-card-header">
+                    <h3 class="apple-card-title">Order Details</h3>
+                </div>
+                <div class="apple-card-body">
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Customer</label>
+                        {{ form.customer }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Payment Method</label>
+                        {{ form.payment_method }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Status</label>
+                        {{ form.status }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Notes</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="apple-card" style="margin-top: 16px;">
+                <div class="apple-card-body">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Subtotal</span>
+                        <span id="subtotal" style="font-size: 14px;">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Tax</span>
+                        <span id="tax" style="font-size: 14px;">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.06);">
+                        <span style="font-size: 16px; font-weight: 600;">Total</span>
+                        <span id="total" style="font-size: 16px; font-weight: 700;">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                {% include "components/button.html" with text="Save Order" type="primary" %}
+                <a href="{% url 'sales:order_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('add-item');
+    const tbody = document.querySelector('#order-items tbody');
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            const formIdx = parseInt(totalForms.value);
+            const newRow = document.querySelector('.order-item-row').cloneNode(true);
+            newRow.innerHTML = newRow.innerHTML.replace(/items-0/g, 'items-' + formIdx);
+            tbody.appendChild(newRow);
+            totalForms.value = formIdx + 1;
+        });
+    }
+});
+</script>
+{% endblock %}

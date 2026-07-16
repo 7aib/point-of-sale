@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Quick Sale - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Quick Sale{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'sales:order_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Orders</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+        <!-- Products / Items -->
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Add Items</h3>
+                <input type="text" id="product-search" placeholder="Search products..."
+                       style="padding: 8px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none; width: 200px;">
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <!-- Product grid -->
+                <div id="product-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; padding: 16px 24px; max-height: 400px; overflow-y: auto;">
+                    {% for product in products %}
+                    <div class="product-card" data-name="{{ product.name|lower }}" data-id="{{ product.pk }}" data-price="{{ product.selling_price }}" data-stock="{{ product.stock_quantity }}" style="border: 1px solid var(--apple-border); border-radius: var(--apple-radius); padding: 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--apple-blue)'" onmouseout="this.style.borderColor='var(--apple-border)'" onclick="addProduct({{ product.pk }}, '{{ product.name|escapejs }}', {{ product.selling_price }})">
+                        <p style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">{{ product.name }}</p>
+                        <p style="font-size: 12px; color: var(--apple-text-secondary);">{{ product.sku }}</p>
+                        <p style="font-size: 14px; font-weight: 600; color: var(--apple-blue); margin-top: 8px;">{{ STORE_CURRENCY_SYMBOL }} {{ product.selling_price }}</p>
+                        <p style="font-size: 11px; color: var(--apple-text-secondary);">Stock: {{ product.stock_quantity }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Selected items -->
+                <div style="border-top: 1px solid rgba(0,0,0,0.06); padding: 16px 24px;">
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Selected Items</h4>
+                    <div id="cart-items" style="min-height: 60px;">
+                        <p style="color: var(--apple-text-secondary); font-size: 14px;">Click products above to add them</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div>
+            <div class="apple-card">
+                <div class="apple-card-header">
+                    <h3 class="apple-card-title">Sale Summary</h3>
+                </div>
+                <div class="apple-card-body">
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Customer</label>
+                        {{ form.customer }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Payment Method</label>
+                        {{ form.payment_method }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Discount / Coupon Code</label>
+                        {{ form.discount_code }}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Notes</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="apple-card" style="margin-top: 16px;">
+                <div class="apple-card-body">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Subtotal</span>
+                        <span id="subtotal" style="font-size: 14px;">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 14px; color: var(--apple-text-secondary);">Items</span>
+                        <span id="item-count" style="font-size: 14px;">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.06);">
+                        <span style="font-size: 16px; font-weight: 600;">Total</span>
+                        <span id="total" style="font-size: 16px; font-weight: 700;">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" class="apple-btn apple-btn-primary" style="width: 100%; padding: 14px; font-size: 16px;">
+                    Complete Sale
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cart = [];
+
+function addProduct(id, name, price) {
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({ id, name, price: parseFloat(price), quantity: 1 });
+    }
+    renderCart();
+}
+
+function removeProduct(id) {
+    cart = cart.filter(item => item.id !== id);
+    renderCart();
+}
+
+function updateQuantity(id, qty) {
+    const item = cart.find(item => item.id === id);
+    if (item) {
+        item.quantity = Math.max(1, parseInt(qty) || 1);
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const container = document.getElementById('cart-items');
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('total');
+    const countEl = document.getElementById('item-count');
+
+    if (cart.length === 0) {
+        container.innerHTML = '<p style="color: var(--apple-text-secondary); font-size: 14px;">Click products above to add them</p>';
+        subtotalEl.textContent = '{{ STORE_CURRENCY_SYMBOL }} 0';
+        totalEl.textContent = '{{ STORE_CURRENCY_SYMBOL }} 0';
+        countEl.textContent = '0';
+        return;
+    }
+
+    let html = '';
+    let subtotal = 0;
+    let totalQty = 0;
+
+    cart.forEach(item => {
+        const lineTotal = item.price * item.quantity;
+        subtotal += lineTotal;
+        totalQty += item.quantity;
+
+        html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.04);">
+            <div style="flex: 1;">
+                <p style="font-size: 14px; font-weight: 500;">${item.name}</p>
+                <p style="font-size: 12px; color: var(--apple-text-secondary);">{{ STORE_CURRENCY_SYMBOL }} ${item.price.toFixed(2)} each</p>
+            </div>
+            <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${item.id}, this.value)" style="width: 60px; padding: 4px 8px; font-size: 13px; border: 1px solid var(--apple-border); border-radius: 4px; text-align: center;">
+            <span style="font-size: 14px; font-weight: 600; min-width: 80px; text-align: right;">{{ STORE_CURRENCY_SYMBOL }} ${lineTotal.toFixed(2)}</span>
+            <button type="button" onclick="removeProduct(${item.id})" style="margin-left: 8px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">&times;</button>
+        </div>
+        <input type="hidden" name="item_product[]" value="${item.id}">
+        <input type="hidden" name="item_quantity[]" value="${item.quantity}">
+        `;
+    });
+
+    container.innerHTML = html;
+    subtotalEl.textContent = '{{ STORE_CURRENCY_SYMBOL }} ' + subtotal.toFixed(0);
+    totalEl.textContent = '{{ STORE_CURRENCY_SYMBOL }} ' + subtotal.toFixed(0);
+    countEl.textContent = totalQty + ' item' + (totalQty !== 1 ? 's' : '');
+}
+
+// Product search filter
+document.getElementById('product-search').addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('.product-card').forEach(card => {
+        const name = card.dataset.name;
+        card.style.display = name.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

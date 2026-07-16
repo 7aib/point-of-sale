@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'sales:order_detail' pk=order.pk %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Order</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 560px;">
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">Payment for {{ order.order_number }}</h3>
+    </div>
+    <div class="apple-card-body">
+        <!-- Balance Summary -->
+        <div style="background: var(--apple-bg); padding: 16px 20px; border-radius: var(--apple-radius-sm); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 14px; color: var(--apple-text-secondary);">Order Total</span>
+                <span style="font-size: 14px; font-weight: 500;">{{ STORE_CURRENCY_SYMBOL }} {{ order.total_amount }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 14px; color: var(--apple-text-secondary);">Already Paid</span>
+                <span style="font-size: 14px; font-weight: 500;">{{ STORE_CURRENCY_SYMBOL }} {{ total_paid }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.06);">
+                <span style="font-size: 16px; font-weight: 600;">Balance Due</span>
+                <span style="font-size: 16px; font-weight: 700; color: #f59e0b;">{{ STORE_CURRENCY_SYMBOL }} {{ balance }}</span>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% include "components/form_field.html" with field=form.amount label="Payment Amount" %}
+            {% include "components/form_field.html" with field=form.payment_method label="Payment Method" %}
+            {% include "components/form_field.html" with field=form.transaction_id label="Transaction ID" %}
+            {% include "components/form_field.html" with field=form.notes label="Notes" %}
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Record Payment" type="primary" %}
+                <a href="{% url 'sales:order_detail' pk=order.pk %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
