@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}{{ discount.name }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ discount.name }}{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'discounts:discount_update' pk=discount.pk %}" class="apple-btn apple-btn-secondary apple-btn-sm">Edit</a>
+        <form method="post" action="{% url 'discounts:discount_delete' pk=discount.pk %}" style="margin:0;" onsubmit="return confirm('Delete this discount?');">
+            {% csrf_token %}
+            <button type="submit" class="apple-btn apple-btn-danger apple-btn-sm">Delete</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="apple-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Discount Info -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Discount Details</h3>
+            {% if not discount.is_active %}
+            {% include "components/badge.html" with text="Inactive" type="neutral" %}
+            {% elif discount.is_expired %}
+            {% include "components/badge.html" with text="Expired" type="danger" %}
+            {% else %}
+            {% include "components/badge.html" with text="Active" type="success" %}
+            {% endif %}
+        </div>
+        <div class="apple-card-body">
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Code</p>
+                <code style="background: var(--apple-bg); padding: 4px 12px; border-radius: 6px; font-size: 16px; font-weight: 700; letter-spacing: 1px;">{{ discount.code }}</code>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Discount Value</p>
+                <p style="font-size: 24px; font-weight: 700; color: var(--apple-blue);">{{ discount.get_display_value }}</p>
+            </div>
+
+            {% if discount.description %}
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Description</p>
+                <p style="font-size: 14px; line-height: 1.6;">{{ discount.description }}</p>
+            </div>
+            {% endif %}
+
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Min Purchase</p>
+                <p style="font-size: 14px; font-weight: 500;">{% if discount.min_purchase_amount > 0 %}{{ STORE_CURRENCY_SYMBOL }} {{ discount.min_purchase_amount|floatformat:0 }}{% else %}No minimum{% endif %}</p>
+            </div>
+
+            {% if discount.discount_type == "percentage" and discount.max_discount_amount > 0 %}
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Max Discount Cap</p>
+                <p style="font-size: 14px; font-weight: 500;">{{ STORE_CURRENCY_SYMBOL }} {{ discount.max_discount_amount|floatformat:0 }}</p>
+            </div>
+            {% endif %}
+
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Valid Period</p>
+                <p style="font-size: 14px; font-weight: 500;">{{ discount.valid_from|date:"M d, Y H:i" }} — {{ discount.valid_to|date:"M d, Y H:i"|default:"No expiry" }}</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Usage</p>
+                <p style="font-size: 14px; font-weight: 500;">
+                    {{ discount.used_count }}
+                    {% if discount.usage_limit > 0 %} / {{ discount.usage_limit }}{% else %} / unlimited{% endif %}
+                    {% if discount.usage_remaining is not None %}
+                    <span style="color: var(--apple-text-secondary);">({{ discount.usage_remaining }} remaining)</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restriction & Stats -->
+    <div>
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Quick Stats</h3>
+            </div>
+            <div class="apple-card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="text-align: center; padding: 16px; background: var(--apple-bg); border-radius: var(--apple-radius-sm);">
+                        <p style="font-size: 24px; font-weight: 700;">{{ discount.used_count }}</p>
+                        <p style="font-size: 12px; color: var(--apple-text-secondary);">Times Used</p>
+                    </div>
+                    <div style="text-align: center; padding: 16px; background: var(--apple-bg); border-radius: var(--apple-radius-sm);">
+                        <p style="font-size: 24px; font-weight: 700;">
+                            {% if discount.usage_remaining is not None %}{{ discount.usage_remaining }}{% else %}&#8734;{% endif %}
+                        </p>
+                        <p style="font-size: 12px; color: var(--apple-text-secondary);">Remaining</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if discount.applies_to_products.all %}
+        <div class="apple-card" style="margin-top: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Applicable Products</h3>
+                {% include "components/badge.html" with text=discount.applies_to_products.count|add:" products" type="primary" %}
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in discount.applies_to_products.all %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ STORE_CURRENCY_SYMBOL }} {{ product.selling_price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if discount.applies_to_categories.all %}
+        <div class="apple-card" style="margin-top: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Applicable Categories</h3>
+                {% include "components/badge.html" with text=discount.applies_to_categories.count|add:" categories" type="primary" %}
+            </div>
+            <div class="apple-card-body">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    {% for category in discount.applies_to_categories.all %}
+                    {% include "components/badge.html" with text=category.name type="neutral" %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 16px; font-size: 13px; color: var(--apple-text-secondary);">
+            <p>Created: {{ discount.created_at|date:"M d, Y H:i" }}</p>
+            <p>Last updated: {{ discount.updated_at|date:"M d, Y H:i" }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

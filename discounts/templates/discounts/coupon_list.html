@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Coupons - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Coupons{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'discounts:discount_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Discounts</a>
+        <a href="{% url 'discounts:coupon_create' %}" class="apple-btn apple-btn-primary apple-btn-sm">+ Add Coupon</a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by code or description..."
+                   style="flex: 1; min-width: 200px; padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+
+            <select name="type" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+                <option value="">All Types</option>
+                <option value="percentage" {% if discount_type == "percentage" %}selected{% endif %}>Percentage</option>
+                <option value="fixed" {% if discount_type == "fixed" %}selected{% endif %}>Fixed Amount</option>
+            </select>
+
+            <select name="status" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+                <option value="">All Status</option>
+                <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
+                <option value="expired" {% if status == "expired" %}selected{% endif %}>Expired</option>
+            </select>
+
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Search</button>
+            {% if search or discount_type or status %}
+            <a href="{% url 'discounts:coupon_list' %}" class="apple-btn apple-btn-ghost apple-btn-sm">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Coupons Table -->
+<div class="apple-card">
+    <div class="apple-card-body" style="padding: 0;">
+        {% if coupons %}
+        <div class="apple-table-wrapper">
+            <table class="apple-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&search={{ search }}&type={{ discount_type }}&status={{ status }}" style="text-decoration:none;color:inherit;">
+                                Code {% if sort == "code" %}&#9650;{% elif sort == "-code" %}&#9660;{% endif %}
+                            </a>
+                        </th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Min Order</th>
+                        <th>Max Uses</th>
+                        <th>Used</th>
+                        <th>Per User</th>
+                        <th>Status</th>
+                        <th>Valid Until</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td>
+                            <code style="background: var(--apple-bg); padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600;">{{ coupon.code }}</code>
+                        </td>
+                        <td>
+                            {% if coupon.discount_type == "percentage" %}
+                            {% include "components/badge.html" with text="%" type="primary" %}
+                            {% else %}
+                            {% include "components/badge.html" with text="Rs" type="success" %}
+                            {% endif %}
+                        </td>
+                        <td style="font-weight: 600;">{{ coupon.get_display_value }}</td>
+                        <td>{% if coupon.min_order_amount > 0 %}{{ STORE_CURRENCY_SYMBOL }} {{ coupon.min_order_amount|floatformat:0 }}{% else %}-{% endif %}</td>
+                        <td>{% if coupon.max_uses > 0 %}{{ coupon.max_uses }}{% else %}&#8734;{% endif %}</td>
+                        <td>{{ coupon.used_count }}</td>
+                        <td>{{ coupon.max_uses_per_user }}</td>
+                        <td>
+                            {% if not coupon.is_active %}
+                            {% include "components/badge.html" with text="Inactive" type="neutral" %}
+                            {% elif coupon.is_expired %}
+                            {% include "components/badge.html" with text="Expired" type="danger" %}
+                            {% else %}
+                            {% include "components/badge.html" with text="Active" type="success" %}
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 13px;">{{ coupon.valid_to|date:"M d, Y"|default:"Never" }}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <a href="{% url 'discounts:coupon_detail' pk=coupon.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="View">&#128065;</a>
+                                <a href="{% url 'discounts:coupon_update' pk=coupon.pk %}" class="apple-btn apple-btn-ghost apple-btn-sm" title="Edit">&#9998;</a>
+                                <form method="post" action="{% url 'discounts:coupon_delete' pk=coupon.pk %}" style="margin:0;" onsubmit="return confirm('Delete this coupon?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;" title="Delete">&#128465;</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if coupons.has_other_pages %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+            <span style="font-size: 13px; color: var(--apple-text-secondary);">
+                Showing {{ coupons.start_index }}-{{ coupons.end_index }} of {{ coupons.paginator.count }}
+            </span>
+            <div style="display: flex; gap: 4px;">
+                {% if coupons.has_previous %}
+                <a href="?page={{ coupons.previous_page_number }}&search={{ search }}&type={{ discount_type }}&status={{ status }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">&laquo; Prev</a>
+                {% endif %}
+                {% for num in coupons.paginator.page_range %}
+                <a href="?page={{ num }}&search={{ search }}&type={{ discount_type }}&status={{ status }}&sort={{ sort }}"
+                   class="apple-btn {% if coupons.number == num %}apple-btn-primary{% else %}apple-btn-secondary{% endif %} apple-btn-sm">{{ num }}</a>
+                {% endfor %}
+                {% if coupons.has_next %}
+                <a href="?page={{ coupons.next_page_number }}&search={{ search }}&type={{ discount_type }}&status={{ status }}&sort={{ sort }}" class="apple-btn apple-btn-secondary apple-btn-sm">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        {% include "components/empty_state.html" with title="No coupons yet" description="Create your first coupon code for customers to redeem." action_text="Add Coupon" action_url="/discounts/coupons/add/" %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

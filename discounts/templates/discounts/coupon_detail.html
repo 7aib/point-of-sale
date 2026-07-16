@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Coupon {{ coupon.code }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Coupon {{ coupon.code }}{% endblock %}
+
+{% block topbar_right %}
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'discounts:coupon_update' pk=coupon.pk %}" class="apple-btn apple-btn-secondary apple-btn-sm">Edit</a>
+        <form method="post" action="{% url 'discounts:coupon_delete' pk=coupon.pk %}" style="margin:0;" onsubmit="return confirm('Delete this coupon?');">
+            {% csrf_token %}
+            <button type="submit" class="apple-btn apple-btn-danger apple-btn-sm">Delete</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 640px;">
+    <div class="apple-card-header">
+        <h3 class="apple-card-title">Coupon Details</h3>
+        {% if not coupon.is_active %}
+        {% include "components/badge.html" with text="Inactive" type="neutral" %}
+        {% elif coupon.is_expired %}
+        {% include "components/badge.html" with text="Expired" type="danger" %}
+        {% else %}
+        {% include "components/badge.html" with text="Active" type="success" %}
+        {% endif %}
+    </div>
+    <div class="apple-card-body">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <code style="background: var(--apple-bg); padding: 8px 24px; border-radius: 8px; font-size: 24px; font-weight: 700; letter-spacing: 2px;">{{ coupon.code }}</code>
+            <p style="margin-top: 8px; font-size: 20px; font-weight: 600; color: var(--apple-blue);">{{ coupon.get_display_value }}</p>
+        </div>
+
+        {% if coupon.description %}
+        <div style="margin-bottom: 20px;">
+            <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Description</p>
+            <p style="font-size: 14px; line-height: 1.6;">{{ coupon.description }}</p>
+        </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Min Order Amount</p>
+                <p style="font-size: 14px; font-weight: 500;">{% if coupon.min_order_amount > 0 %}{{ STORE_CURRENCY_SYMBOL }} {{ coupon.min_order_amount|floatformat:0 }}{% else %}No minimum{% endif %}</p>
+            </div>
+            <div>
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Max Uses Per User</p>
+                <p style="font-size: 14px; font-weight: 500;">{{ coupon.max_uses_per_user }}</p>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Total Usage</p>
+                <p style="font-size: 14px; font-weight: 500;">
+                    {{ coupon.used_count }}
+                    {% if coupon.max_uses > 0 %} / {{ coupon.max_uses }}{% else %} / unlimited{% endif %}
+                </p>
+            </div>
+            <div>
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Remaining</p>
+                <p style="font-size: 14px; font-weight: 500;">
+                    {% if coupon.usage_remaining is not None %}{{ coupon.usage_remaining }}{% else %}&#8734;{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 20px;">
+            <div style="margin-bottom: 12px;">
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Valid Period</p>
+                <p style="font-size: 14px; font-weight: 500;">{{ coupon.valid_from|date:"M d, Y H:i" }} — {{ coupon.valid_to|date:"M d, Y H:i"|default:"No expiry" }}</p>
+            </div>
+            <div>
+                <p style="font-size: 12px; color: var(--apple-text-secondary); margin-bottom: 4px;">Created</p>
+                <p style="font-size: 14px; font-weight: 500;">{{ coupon.created_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

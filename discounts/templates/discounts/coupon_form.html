@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'discounts:coupon_list' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Coupons</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-card" style="max-width: 640px;">
+    <div class="apple-card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="apple-alert apple-alert-danger" style="margin-bottom: 24px;">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.code label="Coupon Code" %}
+                {% include "components/form_field.html" with field=form.discount_type label="Discount Type" %}
+            </div>
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.discount_value label="Discount Value" %}
+                {% include "components/form_field.html" with field=form.min_order_amount label="Min Order Amount" %}
+            </div>
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.max_uses label="Max Total Uses (0=unlimited)" %}
+                {% include "components/form_field.html" with field=form.max_uses_per_user label="Max Uses Per User" %}
+            </div>
+
+            {% include "components/form_field.html" with field=form.description label="Description" %}
+
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.valid_from label="Valid From" %}
+                {% include "components/form_field.html" with field=form.valid_to label="Valid Until" %}
+            </div>
+
+            {% include "components/form_field.html" with field=form.is_active label="Active" %}
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06);">
+                {% include "components/button.html" with text="Save Coupon" type="primary" %}
+                <a href="{% url 'discounts:coupon_list' %}" class="apple-btn apple-btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
