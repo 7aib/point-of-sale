@@ -1,0 +1,828 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}POS Terminal - {{ PROJECT_NAME }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { overflow: hidden; }
+    .sidebar { display: none; }
+    .app-layout { margin-left: 0 !important; }
+    .topbar { display: none !important; }
+    .content-area { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+
+    .pos-root {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        height: 100vh;
+        background: var(--apple-bg);
+        overflow: hidden;
+    }
+
+    /* Left: Product Grid */
+    .pos-products {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-right: 1px solid var(--apple-border);
+        background: #fff;
+    }
+    .pos-products-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .pos-products-header input {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 16px;
+        font-family: var(--apple-font);
+        border: 2px solid var(--apple-border);
+        border-radius: var(--apple-radius-sm);
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .pos-products-header input:focus {
+        border-color: var(--apple-blue);
+    }
+    .pos-products-header .barcode-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--apple-text-secondary);
+    }
+    .pos-products-grid {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        align-content: start;
+    }
+    .pos-product-card {
+        border: 2px solid var(--apple-border);
+        border-radius: var(--apple-radius-sm);
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: #fff;
+        text-align: center;
+    }
+    .pos-product-card:hover {
+        border-color: var(--apple-blue);
+        box-shadow: 0 2px 12px rgba(0,113,227,0.15);
+        transform: translateY(-1px);
+    }
+    .pos-product-card:active {
+        transform: scale(0.97);
+    }
+    .pos-product-card .product-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .pos-product-card .product-sku {
+        font-size: 11px;
+        color: var(--apple-text-secondary);
+        margin-bottom: 8px;
+    }
+    .pos-product-card .product-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--apple-blue);
+    }
+    .pos-product-card .product-stock {
+        font-size: 11px;
+        color: var(--apple-text-secondary);
+        margin-top: 4px;
+    }
+    .pos-product-card.out-of-stock {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    /* Right: Cart / Checkout */
+    .pos-cart {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        overflow: hidden;
+    }
+    .pos-cart-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        flex-shrink: 0;
+    }
+    .pos-cart-header h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .pos-cart-header .item-count {
+        font-size: 13px;
+        color: var(--apple-text-secondary);
+    }
+
+    .pos-cart-items {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+    }
+    .pos-cart-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--apple-text-secondary);
+        text-align: center;
+        padding: 40px;
+    }
+    .pos-cart-empty svg {
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+    .pos-cart-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 24px;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        gap: 12px;
+        transition: background 0.15s;
+    }
+    .pos-cart-item:hover {
+        background: rgba(0,0,0,0.02);
+    }
+    .pos-cart-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .pos-cart-item-name {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .pos-cart-item-price {
+        font-size: 12px;
+        color: var(--apple-text-secondary);
+    }
+    .pos-cart-item-qty {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .pos-cart-item-qty button {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1px solid var(--apple-border);
+        background: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+    }
+    .pos-cart-item-qty button:hover {
+        background: var(--apple-bg);
+    }
+    .pos-cart-item-qty span {
+        width: 32px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .pos-cart-item-total {
+        font-weight: 600;
+        font-size: 14px;
+        min-width: 70px;
+        text-align: right;
+    }
+    .pos-cart-item-remove {
+        color: #dc2626;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        transition: background 0.15s;
+    }
+    .pos-cart-item-remove:hover {
+        background: #fef2f2;
+    }
+
+    /* Cart Footer / Checkout */
+    .pos-cart-footer {
+        border-top: 2px solid var(--apple-border);
+        padding: 16px 24px;
+        flex-shrink: 0;
+        background: #fff;
+    }
+    .pos-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+    .pos-summary-row.discount {
+        color: #dc2626;
+    }
+    .pos-summary-row.total {
+        font-size: 20px;
+        font-weight: 700;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .pos-discount-input {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .pos-discount-input input {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-family: var(--apple-font);
+        border: 1px solid var(--apple-border);
+        border-radius: var(--apple-radius-sm);
+        outline: none;
+    }
+    .pos-discount-input input:focus {
+        border-color: var(--apple-blue);
+    }
+    .pos-checkout-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 18px;
+        font-weight: 700;
+        font-family: var(--apple-font);
+        background: var(--apple-blue);
+        color: #fff;
+        border: none;
+        border-radius: var(--apple-radius-sm);
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 12px;
+    }
+    .pos-checkout-btn:hover {
+        background: var(--apple-blue-hover);
+    }
+    .pos-checkout-btn:disabled {
+        background: var(--apple-border);
+        cursor: not-allowed;
+    }
+    .pos-clear-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: var(--apple-font);
+        background: none;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: var(--apple-radius-sm);
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 8px;
+    }
+    .pos-clear-btn:hover {
+        background: #fef2f2;
+    }
+
+    /* Payment method selector */
+    .pos-payment-methods {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    .pos-payment-method {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 500;
+        font-family: var(--apple-font);
+        border: 2px solid var(--apple-border);
+        border-radius: var(--apple-radius-sm);
+        cursor: pointer;
+        transition: all 0.15s;
+        background: #fff;
+    }
+    .pos-payment-method:hover {
+        border-color: var(--apple-blue);
+    }
+    .pos-payment-method.active {
+        border-color: var(--apple-blue);
+        background: rgba(0,113,227,0.05);
+        color: var(--apple-blue);
+    }
+
+    /* Customer selector */
+    .pos-customer-select {
+        margin-bottom: 12px;
+    }
+    .pos-customer-select select {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-family: var(--apple-font);
+        border: 1px solid var(--apple-border);
+        border-radius: var(--apple-radius-sm);
+        outline: none;
+        background: #fff;
+    }
+
+    /* Success overlay */
+    .pos-success-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .pos-success-overlay.show {
+        display: flex;
+    }
+    .pos-success-card {
+        background: #fff;
+        border-radius: var(--apple-radius);
+        padding: 48px;
+        text-align: center;
+        max-width: 400px;
+        box-shadow: var(--apple-shadow-lg);
+        animation: posPop 0.3s ease;
+    }
+    @keyframes posPop {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .pos-success-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #dcfce7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    .pos-success-card h3 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .pos-success-card .order-num {
+        font-size: 16px;
+        color: var(--apple-text-secondary);
+        margin-bottom: 4px;
+    }
+    .pos-success-card .order-total {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--apple-blue);
+        margin-bottom: 24px;
+    }
+    .pos-success-actions {
+        display: flex;
+        gap: 12px;
+    }
+    .pos-success-actions button, .pos-success-actions a {
+        flex: 1;
+    }
+
+    /* Toast */
+    .pos-toast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 10000;
+        padding: 12px 20px;
+        border-radius: var(--apple-radius-sm);
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--apple-shadow-lg);
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+    .pos-toast.show { transform: translateX(0); }
+    .pos-toast.error { background: #dc2626; color: #fff; }
+    .pos-toast.success { background: #16a34a; color: #fff; }
+    .pos-toast.warning { background: #f59e0b; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-root">
+    <!-- Left: Products -->
+    <div class="pos-products">
+        <div class="pos-products-header">
+            <div style="position: relative; flex: 1;">
+                <input type="text" id="barcode-input" placeholder="Scan barcode or search product..." autofocus autocomplete="off">
+                <svg class="barcode-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+            </div>
+            <input type="text" id="product-search" placeholder="Search name..."
+                   style="width: 200px; padding: 12px 16px; font-size: 14px; font-family: var(--apple-font); border: 2px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+        </div>
+        <div class="pos-products-grid" id="product-grid">
+            {% for product in products %}
+            <div class="pos-product-card"
+                 data-id="{{ product.pk }}"
+                 data-name="{{ product.name|escapejs }}"
+                 data-price="{{ product.selling_price }}"
+                 data-sku="{{ product.sku }}"
+                 data-stock="{{ product.stock_quantity }}"
+                 data-barcode="{{ product.barcode|default:'' }}"
+                 onclick="addToCart({{ product.pk }}, '{{ product.name|escapejs }}', {{ product.selling_price }}, {{ product.stock_quantity }})">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-sku">{{ product.sku }}</div>
+                <div class="product-price">{{ STORE_CURRENCY_SYMBOL }} {{ product.selling_price }}</div>
+                <div class="product-stock">Stock: {{ product.stock_quantity }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right: Cart -->
+    <div class="pos-cart">
+        <div class="pos-cart-header">
+            <h2>Current Sale</h2>
+            <span class="item-count" id="cart-count">0 items</span>
+        </div>
+
+        <div class="pos-cart-items" id="cart-items">
+            <div class="pos-cart-empty" id="cart-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                <p style="font-size: 16px; font-weight: 500;">Cart is empty</p>
+                <p style="font-size: 13px; margin-top: 4px;">Scan a barcode or tap a product</p>
+            </div>
+        </div>
+
+        <div class="pos-cart-footer">
+            <!-- Customer -->
+            <div class="pos-customer-select">
+                <select id="customer-select">
+                    <option value="">Walk-in Customer</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.pk }}">{{ customer.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="pos-payment-methods">
+                <button class="pos-payment-method active" data-method="cash" onclick="selectPayment(this)">Cash</button>
+                <button class="pos-payment-method" data-method="card" onclick="selectPayment(this)">Card</button>
+                <button class="pos-payment-method" data-method="bank_transfer" onclick="selectPayment(this)">Transfer</button>
+                <button class="pos-payment-method" data-method="credit" onclick="selectPayment(this)">Credit</button>
+            </div>
+
+            <!-- Discount -->
+            <div class="pos-discount-input">
+                <input type="text" id="discount-code" placeholder="Discount / coupon code">
+                <button onclick="applyDiscount()" style="padding: 10px 16px; font-size: 13px; font-weight: 500; font-family: var(--apple-font); background: var(--apple-bg); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); cursor: pointer;">Apply</button>
+            </div>
+
+            <!-- Totals -->
+            <div id="pos-totals">
+                <div class="pos-summary-row">
+                    <span>Subtotal</span>
+                    <span id="pos-subtotal">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                </div>
+                <div class="pos-summary-row discount" id="pos-discount-row" style="display: none;">
+                    <span>Discount</span>
+                    <span id="pos-discount">-{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                </div>
+                <div class="pos-summary-row total">
+                    <span>Total</span>
+                    <span id="pos-total">{{ STORE_CURRENCY_SYMBOL }} 0</span>
+                </div>
+            </div>
+
+            <!-- Checkout -->
+            <button class="pos-checkout-btn" id="checkout-btn" onclick="completeSale()" disabled>
+                Complete Sale
+            </button>
+            <button class="pos-clear-btn" onclick="clearCart()">
+                Clear Cart
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Overlay -->
+<div class="pos-success-overlay" id="success-overlay">
+    <div class="pos-success-card">
+        <div class="pos-success-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3>Sale Complete!</h3>
+        <p class="order-num" id="success-order-num">Order #ORD-000000</p>
+        <p class="order-total" id="success-total">Rs 0</p>
+        <div class="pos-success-actions">
+            <button class="apple-btn apple-btn-secondary" onclick="closeSuccess()">New Sale</button>
+            <a class="apple-btn apple-btn-primary" id="success-view-link" href="#">View Order</a>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="pos-toast" id="pos-toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// =============================================================================
+// State
+// =============================================================================
+let cart = [];
+let discountAmount = 0;
+let selectedPayment = 'cash';
+const CURRENCY = '{{ STORE_CURRENCY_SYMBOL }}';
+
+// =============================================================================
+// Cart Operations
+// =============================================================================
+function addToCart(id, name, price, stock) {
+    price = parseFloat(price);
+    const existing = cart.find(i => i.id === id);
+    if (existing) {
+        if (existing.quantity >= stock) {
+            showToast('Maximum stock reached', 'warning');
+            return;
+        }
+        existing.quantity += 1;
+    } else {
+        cart.push({ id, name, price, quantity: 1, stock });
+    }
+    renderCart();
+    showToast(`${name} added`, 'success');
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(i => i.id !== id);
+    renderCart();
+}
+
+function updateQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+        removeFromCart(id);
+        return;
+    }
+    if (newQty > item.stock) {
+        showToast('Maximum stock reached', 'warning');
+        return;
+    }
+    item.quantity = newQty;
+    renderCart();
+}
+
+function clearCart() {
+    cart = [];
+    discountAmount = 0;
+    document.getElementById('discount-code').value = '';
+    document.getElementById('pos-discount-row').style.display = 'none';
+    renderCart();
+}
+
+function renderCart() {
+    const container = document.getElementById('cart-items');
+    const empty = document.getElementById('cart-empty');
+    const countEl = document.getElementById('cart-count');
+    const subtotalEl = document.getElementById('pos-subtotal');
+    const totalEl = document.getElementById('pos-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    if (cart.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(createEmptyState());
+        countEl.textContent = '0 items';
+        subtotalEl.textContent = `${CURRENCY} 0`;
+        totalEl.textContent = `${CURRENCY} 0`;
+        checkoutBtn.disabled = true;
+        return;
+    }
+
+    let html = '';
+    let subtotal = 0;
+    let totalQty = 0;
+
+    cart.forEach(item => {
+        const lineTotal = item.price * item.quantity;
+        subtotal += lineTotal;
+        totalQty += item.quantity;
+
+        html += `
+        <div class="pos-cart-item">
+            <div class="pos-cart-item-info">
+                <div class="pos-cart-item-name">${item.name}</div>
+                <div class="pos-cart-item-price">${CURRENCY} ${item.price.toFixed(2)} each</div>
+            </div>
+            <div class="pos-cart-item-qty">
+                <button onclick="updateQty(${item.id}, -1)">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="updateQty(${item.id}, 1)">+</button>
+            </div>
+            <div class="pos-cart-item-total">${CURRENCY} ${lineTotal.toFixed(0)}</div>
+            <button class="pos-cart-item-remove" onclick="removeFromCart(${item.id})" title="Remove">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+
+    const total = Math.max(0, subtotal - discountAmount);
+    countEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''}`;
+    subtotalEl.textContent = `${CURRENCY} ${subtotal.toFixed(0)}`;
+    totalEl.textContent = `${CURRENCY} ${total.toFixed(0)}`;
+    checkoutBtn.disabled = false;
+
+    if (discountAmount > 0) {
+        document.getElementById('pos-discount-row').style.display = 'flex';
+        document.getElementById('pos-discount').textContent = `-${CURRENCY} ${discountAmount.toFixed(0)}`;
+    }
+}
+
+function createEmptyState() {
+    const div = document.createElement('div');
+    div.className = 'pos-cart-empty';
+    div.id = 'cart-empty';
+    div.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+        <p style="font-size: 16px; font-weight: 500;">Cart is empty</p>
+        <p style="font-size: 13px; margin-top: 4px;">Scan a barcode or tap a product</p>`;
+    return div;
+}
+
+// =============================================================================
+// Barcode / Product Search
+// =============================================================================
+document.getElementById('barcode-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const code = this.value.trim();
+        if (!code) return;
+        lookupBarcode(code);
+        this.value = '';
+    }
+});
+
+function lookupBarcode(code) {
+    fetch(`/sales/api/barcode/?code=${encodeURIComponent(code)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+                return;
+            }
+            addToCart(data.id, data.name, data.price, data.stock);
+        })
+        .catch(() => showToast('Lookup failed', 'error'));
+}
+
+document.getElementById('product-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.pos-product-card').forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        const sku = card.dataset.sku.toLowerCase();
+        card.style.display = (name.includes(q) || sku.includes(q)) ? '' : 'none';
+    });
+});
+
+// =============================================================================
+// Payment Method
+// =============================================================================
+function selectPayment(btn) {
+    document.querySelectorAll('.pos-payment-method').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedPayment = btn.dataset.method;
+}
+
+// =============================================================================
+// Discount
+// =============================================================================
+function applyDiscount() {
+    const code = document.getElementById('discount-code').value.trim();
+    if (!code) return;
+    // Client-side: just store the code, server validates on checkout
+    showToast(`Code "${code}" will be applied at checkout`, 'success');
+}
+
+// =============================================================================
+// Checkout
+// =============================================================================
+function completeSale() {
+    if (cart.length === 0) return;
+
+    const checkoutBtn = document.getElementById('checkout-btn');
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Processing...';
+
+    const payload = {
+        items: cart.map(i => ({ id: i.id, quantity: i.quantity })),
+        customer_id: document.getElementById('customer-select').value || null,
+        payment_method: selectedPayment,
+        discount_code: document.getElementById('discount-code').value.trim(),
+        notes: '',
+    };
+
+    fetch('/sales/api/create-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = 'Complete Sale';
+            return;
+        }
+        // Show success
+        document.getElementById('success-order-num').textContent = `Order ${data.order_number}`;
+        document.getElementById('success-total').textContent = `${CURRENCY} ${data.total}`;
+        document.getElementById('success-view-link').href = data.redirect;
+        document.getElementById('success-overlay').classList.add('show');
+    })
+    .catch(() => {
+        showToast('Checkout failed. Please try again.', 'error');
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Complete Sale';
+    });
+}
+
+function closeSuccess() {
+    document.getElementById('success-overlay').classList.remove('show');
+    cart = [];
+    discountAmount = 0;
+    document.getElementById('discount-code').value = '';
+    document.getElementById('pos-discount-row').style.display = 'none';
+    renderCart();
+    document.getElementById('barcode-input').focus();
+}
+
+// =============================================================================
+// Toast
+// =============================================================================
+function showToast(msg, type) {
+    const toast = document.getElementById('pos-toast');
+    toast.textContent = msg;
+    toast.className = `pos-toast ${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// =============================================================================
+// Keyboard Shortcuts
+// =============================================================================
+document.addEventListener('keydown', function(e) {
+    // F2 = focus barcode input
+    if (e.key === 'F2') {
+        e.preventDefault();
+        document.getElementById('barcode-input').focus();
+    }
+    // F3 = focus search
+    if (e.key === 'F3') {
+        e.preventDefault();
+        document.getElementById('product-search').focus();
+    }
+    // F4 = clear cart
+    if (e.key === 'F4') {
+        e.preventDefault();
+        clearCart();
+    }
+    // F9 = complete sale
+    if (e.key === 'F9') {
+        e.preventDefault();
+        completeSale();
+    }
+    // Escape = close success overlay
+    if (e.key === 'Escape') {
+        closeSuccess();
+    }
+});
+
+// Init
+renderCart();
+</script>
+{% endblock %}

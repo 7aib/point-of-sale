@@ -5,6 +5,8 @@ from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count, F
 from django.utils import timezone
+from django.http import JsonResponse
+import json
 
 from config import ORDERS_PER_PAGE
 from customers.models import Order, OrderItem, Customer
@@ -415,3 +417,154 @@ def _recalculate_order_totals(order, discount_amount=None):
     order.discount_amount = discount_amount
     order.total_amount = round(subtotal + tax_amount - discount_amount, 2)
     order.save(update_fields=["subtotal", "tax_amount", "discount_amount", "total_amount"])
+
+
+# =============================================================================
+# POS Terminal
+# =============================================================================
+
+@login_required
+def pos_terminal(request):
+    products = Product.objects.filter(
+        is_active=True, is_deleted=False, stock_quantity__gt=0
+    ).select_related("category")[:50]
+
+    customers = Customer.objects.filter(is_deleted=False).order_by("first_name")[:100]
+
+    return render(request, "sales/pos_terminal.html", {
+        "products": products,
+        "customers": customers,
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def barcode_lookup(request):
+    """API endpoint: look up a product by barcode or SKU. Returns JSON."""
+    code = request.GET.get("code", "").strip()
+    if not code:
+        return JsonResponse({"error": "No code provided"}, status=400)
+
+    product = Product.objects.filter(
+        Q(barcode=code) | Q(sku=code),
+        is_active=True, is_deleted=False,
+    ).first()
+
+    if not product:
+        return JsonResponse({"error": f"No product found for '{code}'"}, status=404)
+
+    return JsonResponse({
+        "id": product.pk,
+        "name": product.name,
+        "sku": product.sku,
+        "barcode": product.barcode or "",
+        "price": str(product.selling_price),
+        "stock": product.stock_quantity,
+        "category": product.category.name if product.category else "",
+        "tax_rate": str(product.tax_rate),
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def pos_create_order(request):
+    """API endpoint: create an order from POS terminal data."""
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    items = data.get("items", [])
+    if not items:
+        return JsonResponse({"error": "No items provided"}, status=400)
+
+    customer_id = data.get("customer_id")
+    payment_method = data.get("payment_method", "cash")
+    discount_code = data.get("discount_code", "").strip()
+    notes = data.get("notes", "")
+
+    # Resolve customer
+    customer = None
+    if customer_id:
+        customer = Customer.objects.filter(pk=customer_id, is_deleted=False).first()
+    if not customer:
+        customer = Customer.objects.filter(is_deleted=False).first()
+        if not customer:
+            customer = Customer.objects.create(
+                first_name="Walk-in", last_name="Customer",
+            )
+
+    # Create order
+    order = Order(
+        customer=customer,
+        payment_method=payment_method,
+        notes=notes,
+        performed_by=request.user,
+    )
+    order.save()
+
+    # Create items
+    for item_data in items:
+        try:
+            product = Product.objects.get(pk=item_data["id"], is_active=True, is_deleted=False)
+            qty = int(item_data.get("quantity", 1))
+            if qty > 0 and product.stock_quantity >= qty:
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=qty,
+                    unit_price=product.selling_price,
+                )
+                # Deduct stock
+                product.stock_quantity -= qty
+                product.save(update_fields=["stock_quantity"])
+        except (Product.DoesNotExist, KeyError, ValueError):
+            continue
+
+    if not order.items.exists():
+        order.delete()
+        return JsonResponse({"error": "No valid items in order"}, status=400)
+
+    # Calculate subtotal
+    from decimal import Decimal
+    current_subtotal = sum(
+        item.unit_price * item.quantity for item in order.items.all()
+    )
+
+    # Apply discount
+    discount_amount = Decimal("0")
+    if discount_code:
+        try:
+            discount = Discount.objects.get(code__iexact=discount_code, is_active=True)
+            discount_amount = Decimal(str(discount.calculate_discount(current_subtotal)))
+            if discount_amount > 0:
+                discount.used_count += 1
+                discount.save(update_fields=["used_count"])
+        except Discount.DoesNotExist:
+            try:
+                coupon = Coupon.objects.get(code__iexact=discount_code, is_active=True)
+                discount_amount = Decimal(str(coupon.calculate_discount(current_subtotal)))
+                if discount_amount > 0:
+                    coupon.redeem()
+            except Coupon.DoesNotExist:
+                pass
+
+    _recalculate_order_totals(order, discount_amount)
+
+    # Create payment
+    Payment.objects.create(
+        order=order,
+        amount=order.total_amount,
+        payment_method=payment_method,
+        status=Payment.PaymentStatus.COMPLETED,
+        received_by=request.user,
+    )
+
+    return JsonResponse({
+        "success": True,
+        "order_id": order.pk,
+        "order_number": order.order_number,
+        "total": str(order.total_amount),
+        "discount": str(discount_amount),
+        "redirect": f"/sales/orders/{order.pk}/",
+    })

@@ -6,6 +6,10 @@ app_name = "sales"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+    # POS Terminal
+    path("terminal/", views.pos_terminal, name="pos_terminal"),
+    path("api/barcode/", views.barcode_lookup, name="barcode_lookup"),
+    path("api/create-order/", views.pos_create_order, name="pos_create_order"),
     # Orders
     path("orders/", views.order_list, name="order_list"),
     path("orders/create/", views.order_create, name="order_create"),
