@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Customer Report - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Customer Analytics{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'reports:dashboard' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Dashboard</a>
+{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+    .chart-card { background: #fff; border-radius: var(--apple-radius); border: 1px solid rgba(0,0,0,0.04); }
+    .chart-card-header { padding: 20px 24px 0; }
+    .chart-card-header h3 { font-size: 16px; font-weight: 600; }
+    .chart-card-body { padding: 16px 24px 24px; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: var(--apple-radius-sm); padding: 20px; border: 1px solid rgba(0,0,0,0.04); }
+    .stat-label { font-size: 12px; color: var(--apple-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-label">Total Customers</div>
+        <div class="stat-value">{{ total_customers }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Customers with Orders</div>
+        <div class="stat-value">{{ customers_with_orders }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Conversion Rate</div>
+        <div class="stat-value">{% if total_customers > 0 %}{% widthratio customers_with_orders total_customers 100 %}%{% else %}0%{% endif %}</div>
+    </div>
+</div>
+
+<div class="apple-grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- Acquisition Chart -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <h3>Customer Acquisition</h3>
+        </div>
+        <div class="chart-card-body">
+            <canvas id="acquisitionChart" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Top Customers</h3>
+        </div>
+        <div class="apple-card-body" style="padding: 0;">
+            <div class="apple-table-wrapper">
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in top_customers %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td style="font-weight: 500;">{{ customer.full_name }}</td>
+                            <td>{{ customer.order_count }}</td>
+                            <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ customer.total_spent|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not top_customers %}
+                        <tr><td colspan="4" style="text-align: center; padding: 32px; color: var(--apple-text-secondary);">No customers with orders yet</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const acquisitionData = {{ customer_acquisition|safe }};
+
+new Chart(document.getElementById('acquisitionChart'), {
+    type: 'bar',
+    data: {
+        labels: acquisitionData.map(d => new Date(d.month).toLocaleDateString('en', { month: 'short', year: 'numeric' })),
+        datasets: [{
+            label: 'New Customers',
+            data: acquisitionData.map(d => d.count),
+            backgroundColor: 'rgba(0,113,227,0.8)',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        }
+    }
+});
+</script>
+{% endblock %}

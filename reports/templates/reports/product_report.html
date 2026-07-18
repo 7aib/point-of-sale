@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Product Report - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Product Performance{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'reports:dashboard' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Dashboard</a>
+{% endblock %}
+
+{% block content %}
+<div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Products Table -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">All Products</h3>
+            {% include "components/badge.html" with text=products.count|add:" products" type="neutral" %}
+        </div>
+        <div class="apple-card-body" style="padding: 0;">
+            <div class="apple-table-wrapper">
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Category</th>
+                            <th>Stock</th>
+                            <th>Qty Sold</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td style="font-weight: 500;">{{ product.name }}</td>
+                            <td style="font-size: 12px;">{{ product.sku }}</td>
+                            <td>{{ product.category.name|default:"-" }}</td>
+                            <td>
+                                {% if product.stock_quantity <= product.low_stock_threshold %}
+                                <span style="color: #f59e0b; font-weight: 600;">{{ product.stock_quantity }}</span>
+                                {% else %}
+                                {{ product.stock_quantity }}
+                                {% endif %}
+                            </td>
+                            <td>{{ product.total_sold|default:0 }}</td>
+                            <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ product.total_revenue|default:0|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Categories -->
+        <div class="apple-card" style="margin-bottom: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">By Category</h3>
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Products</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td>{{ cat.name }}</td>
+                                <td>{{ cat.product_count }}</td>
+                                <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ cat.total_revenue|default:0|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock -->
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Low Stock Alert</h3>
+                {% if low_stock_products %}
+                {% include "components/badge.html" with text=low_stock_products.count|add:" items" type="warning" %}
+                {% endif %}
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                {% if low_stock_products %}
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Stock</th>
+                                <th>Threshold</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in low_stock_products %}
+                            <tr>
+                                <td style="font-weight: 500;">{{ p.name }}</td>
+                                <td style="color: #dc2626; font-weight: 600;">{{ p.stock_quantity }}</td>
+                                <td>{{ p.low_stock_threshold }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="padding: 32px; text-align: center; color: var(--apple-text-secondary);">
+                    <p>All products are well-stocked</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

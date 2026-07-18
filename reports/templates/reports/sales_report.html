@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sales Report - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Sales Report{% endblock %}
+
+{% block topbar_right %}
+    <a href="{% url 'reports:dashboard' %}" class="apple-btn apple-btn-secondary apple-btn-sm">Back to Dashboard</a>
+{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+    .report-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .report-stat { background: #fff; border-radius: var(--apple-radius-sm); padding: 20px; border: 1px solid rgba(0,0,0,0.04); }
+    .report-stat .label { font-size: 12px; color: var(--apple-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .report-stat .value { font-size: 22px; font-weight: 700; }
+    .report-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .chart-card { background: #fff; border-radius: var(--apple-radius); border: 1px solid rgba(0,0,0,0.04); }
+    .chart-card-header { padding: 20px 24px 0; }
+    .chart-card-header h3 { font-size: 16px; font-weight: 600; }
+    .chart-card-body { padding: 16px 24px 24px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Date Filter -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 14px; font-weight: 500;">Date Range:</label>
+            <input type="date" name="date_from" value="{{ date_from }}" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+            <span style="color: var(--apple-text-secondary);">to</span>
+            <input type="date" name="date_to" value="{{ date_to }}" style="padding: 10px 16px; font-size: 14px; font-family: var(--apple-font); border: 1px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Generate Report</button>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="report-stats">
+    <div class="report-stat">
+        <div class="label">Revenue</div>
+        <div class="value">{{ STORE_CURRENCY_SYMBOL }} {{ total_revenue|floatformat:0 }}</div>
+    </div>
+    <div class="report-stat">
+        <div class="label">Orders</div>
+        <div class="value">{{ total_orders }}</div>
+        <div style="font-size: 12px; color: var(--apple-text-secondary); margin-top: 4px;">{{ completed_orders }} completed</div>
+    </div>
+    <div class="report-stat">
+        <div class="label">Avg Order Value</div>
+        <div class="value">{{ STORE_CURRENCY_SYMBOL }} {{ avg_order_val|floatformat:0 }}</div>
+    </div>
+    <div class="report-stat">
+        <div class="label">Tax Collected</div>
+        <div class="value">{{ STORE_CURRENCY_SYMBOL }} {{ total_tax|floatformat:0 }}</div>
+        <div style="font-size: 12px; color: var(--apple-text-secondary); margin-top: 4px;">Discounts: {{ STORE_CURRENCY_SYMBOL }} {{ total_discount|floatformat:0 }}</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="report-grid">
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <h3>Daily Revenue</h3>
+        </div>
+        <div class="chart-card-body">
+            <canvas id="dailyRevenueChart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <h3>Payment Breakdown</h3>
+        </div>
+        <div class="chart-card-body">
+            <canvas id="paymentBreakdownChart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tables -->
+<div class="report-grid">
+    <!-- Top Products -->
+    <div class="apple-card">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Top Products</h3>
+        </div>
+        <div class="apple-card-body" style="padding: 0;">
+            <div class="apple-table-wrapper">
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Qty Sold</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in top_products %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td style="font-weight: 500;">{{ p.product__name }}</td>
+                            <td>{{ p.qty }}</td>
+                            <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ p.revenue|floatformat:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not top_products %}
+                        <tr><td colspan="4" style="text-align: center; padding: 32px; color: var(--apple-text-secondary);">No data for this period</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Categories + Payment Methods -->
+    <div>
+        <div class="apple-card" style="margin-bottom: 16px;">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Top Categories</h3>
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in top_categories %}
+                            <tr>
+                                <td>{{ c.product__category__name|default:"Uncategorized" }}</td>
+                                <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ c.revenue|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="apple-card">
+            <div class="apple-card-header">
+                <h3 class="apple-card-title">Payment Methods</h3>
+            </div>
+            <div class="apple-card-body" style="padding: 0;">
+                <div class="apple-table-wrapper">
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Orders</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pm in payment_methods %}
+                            <tr>
+                                <td>{{ pm.payment_method|title }}</td>
+                                <td>{{ pm.count }}</td>
+                                <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ pm.total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Status Breakdown -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+    <div class="report-stat" style="border-left: 4px solid #16a34a;">
+        <div class="label">Completed</div>
+        <div class="value" style="color: #16a34a;">{{ completed_orders }}</div>
+    </div>
+    <div class="report-stat" style="border-left: 4px solid #f59e0b;">
+        <div class="label">Pending</div>
+        <div class="value" style="color: #f59e0b;">{{ total_orders|add:"-"|add:completed_orders }}</div>
+    </div>
+    <div class="report-stat" style="border-left: 4px solid #dc2626;">
+        <div class="label">Cancelled</div>
+        <div class="value" style="color: #dc2626;">{{ cancelled_orders }}</div>
+    </div>
+    <div class="report-stat" style="border-left: 4px solid #6b7280;">
+        <div class="label">Refunded</div>
+        <div class="value" style="color: #6b7280;">{{ refunded_orders }}</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CURRENCY = '{{ STORE_CURRENCY_SYMBOL }}';
+const dailyData = {{ daily_revenue|safe }};
+
+// Daily Revenue Chart
+new Chart(document.getElementById('dailyRevenueChart'), {
+    type: 'bar',
+    data: {
+        labels: dailyData.map(d => new Date(d.date).toLocaleDateString('en', { month: 'short', day: 'numeric' })),
+        datasets: [{
+            label: 'Revenue',
+            data: dailyData.map(d => parseFloat(d.revenue || 0)),
+            backgroundColor: 'rgba(0,113,227,0.8)',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { callback: v => CURRENCY + v } },
+            x: { ticks: { maxTicksLimit: 15 } }
+        }
+    }
+});
+
+// Payment Breakdown
+const paymentData = {{ payment_methods|safe }};
+new Chart(document.getElementById('paymentBreakdownChart'), {
+    type: 'doughnut',
+    data: {
+        labels: paymentData.map(p => p.payment_method),
+        datasets: [{
+            data: paymentData.map(p => parseFloat(p.total || 0)),
+            backgroundColor: ['#16a34a', '#0071e3', '#f59e0b', '#8b5cf6', '#6b7280'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { padding: 12, usePointStyle: true } } },
+        cutout: '65%',
+    }
+});
+</script>
+{% endblock %}
