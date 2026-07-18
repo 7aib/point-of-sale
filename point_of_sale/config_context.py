@@ -9,32 +9,45 @@ from config import (
     PRODUCTS_PER_PAGE, ORDERS_PER_PAGE, CUSTOMERS_PER_PAGE,
 )
 
+# Fallback dict from config.py
+_DEFAULTS = {
+    'PROJECT_NAME': PROJECT_NAME,
+    'PROJECT_FULL_NAME': PROJECT_FULL_NAME,
+    'LOGO_ICON': LOGO_ICON,
+    'LOGO_TEXT': LOGO_TEXT,
+    'SLOGAN': SLOGAN,
+    'WEBSITE_URL': WEBSITE_URL,
+    'SUPPORT_EMAIL': SUPPORT_EMAIL,
+    'PHONE_NUMBER': PHONE_NUMBER,
+    'STORE_NAME': STORE_NAME,
+    'STORE_ADDRESS': STORE_ADDRESS,
+    'STORE_CURRENCY': STORE_CURRENCY,
+    'STORE_CURRENCY_SYMBOL': STORE_CURRENCY_SYMBOL,
+    'COUNTRY_CODE': COUNTRY_CODE,
+    'HERO_IMAGE_URL': HERO_IMAGE_URL,
+    'FAVICON': FAVICON,
+    'SOCIAL_FACEBOOK': SOCIAL_FACEBOOK,
+    'SOCIAL_INSTAGRAM': SOCIAL_INSTAGRAM,
+    'SOCIAL_TWITTER': SOCIAL_TWITTER,
+    'TAX_RATE': TAX_RATE,
+    'TAX_LABEL': TAX_LABEL,
+    'RECEIPT_FOOTER_TEXT': RECEIPT_FOOTER_TEXT,
+    'RECEIPT_WIDTH': RECEIPT_WIDTH,
+    'PRODUCTS_PER_PAGE': PRODUCTS_PER_PAGE,
+    'ORDERS_PER_PAGE': ORDERS_PER_PAGE,
+    'CUSTOMERS_PER_PAGE': CUSTOMERS_PER_PAGE,
+    'DISCOUNTS_PER_PAGE': 20,
+}
+
 
 def project_config(request):
-    return {
-        'PROJECT_NAME': PROJECT_NAME,
-        'PROJECT_FULL_NAME': PROJECT_FULL_NAME,
-        'LOGO_ICON': LOGO_ICON,
-        'LOGO_TEXT': LOGO_TEXT,
-        'SLOGAN': SLOGAN,
-        'WEBSITE_URL': WEBSITE_URL,
-        'SUPPORT_EMAIL': SUPPORT_EMAIL,
-        'PHONE_NUMBER': PHONE_NUMBER,
-        'STORE_NAME': STORE_NAME,
-        'STORE_ADDRESS': STORE_ADDRESS,
-        'STORE_CURRENCY': STORE_CURRENCY,
-        'STORE_CURRENCY_SYMBOL': STORE_CURRENCY_SYMBOL,
-        'COUNTRY_CODE': COUNTRY_CODE,
-        'HERO_IMAGE_URL': HERO_IMAGE_URL,
-        'FAVICON': FAVICON,
-        'SOCIAL_FACEBOOK': SOCIAL_FACEBOOK,
-        'SOCIAL_INSTAGRAM': SOCIAL_INSTAGRAM,
-        'SOCIAL_TWITTER': SOCIAL_TWITTER,
-        'TAX_RATE': TAX_RATE,
-        'TAX_LABEL': TAX_LABEL,
-        'RECEIPT_FOOTER_TEXT': RECEIPT_FOOTER_TEXT,
-        'RECEIPT_WIDTH': RECEIPT_WIDTH,
-        'PRODUCTS_PER_PAGE': PRODUCTS_PER_PAGE,
-        'ORDERS_PER_PAGE': ORDERS_PER_PAGE,
-        'CUSTOMERS_PER_PAGE': CUSTOMERS_PER_PAGE,
-    }
+    # Try loading from DB; fall back to config.py defaults
+    try:
+        from point_of_sale.models import StoreSettings
+        from django.db import connection
+        if connection.table_exists('point_of_sale_storesettings'):
+            db_settings = StoreSettings.load()
+            return db_settings.to_dict()
+    except Exception:
+        pass
+    return _DEFAULTS

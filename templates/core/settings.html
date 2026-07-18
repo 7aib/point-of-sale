@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Store Settings - {{ PROJECT_NAME }}{% endblock %}
+{% block page_title %}Store Settings{% endblock %}
+
+{% block content %}
+<form method="post" novalidate enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="apple-alert apple-alert-danger" style="margin-bottom: 24px;">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Branding -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Branding</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.project_name label="Project Name" %}
+                {% include "components/form_field.html" with field=form.project_full_name label="Full Name" %}
+            </div>
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.logo_text label="Logo Text" %}
+                {% include "components/form_field.html" with field=form.logo_icon label="Logo Icon Path" %}
+            </div>
+            {% include "components/form_field.html" with field=form.slogan label="Slogan" %}
+        </div>
+    </div>
+
+    <!-- Store Info -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Store Information</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.store_name label="Store Name" %}
+                {% include "components/form_field.html" with field=form.country_code label="Country Code" %}
+            </div>
+            {% include "components/form_field.html" with field=form.store_address label="Store Address" %}
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.store_currency label="Currency (e.g. PKR)" %}
+                {% include "components/form_field.html" with field=form.store_currency_symbol label="Currency Symbol (e.g. Rs)" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Contact</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.website_url label="Website URL" %}
+                {% include "components/form_field.html" with field=form.support_email label="Support Email" %}
+            </div>
+            {% include "components/form_field.html" with field=form.phone_number label="Phone Number" %}
+        </div>
+    </div>
+
+    <!-- Social Links -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Social Links</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.social_facebook label="Facebook" %}
+                {% include "components/form_field.html" with field=form.social_instagram label="Instagram" %}
+            </div>
+            {% include "components/form_field.html" with field=form.social_twitter label="Twitter" %}
+        </div>
+    </div>
+
+    <!-- Tax Settings -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Tax Settings</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.tax_rate label="Tax Rate (e.g. 0.17 for 17%)" %}
+                {% include "components/form_field.html" with field=form.tax_label label="Tax Label (e.g. GST)" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Receipt Settings</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.receipt_footer_text label="Footer Text" %}
+                {% include "components/form_field.html" with field=form.receipt_width label="Width (characters)" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Pagination</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.products_per_page label="Products Per Page" %}
+                {% include "components/form_field.html" with field=form.orders_per_page label="Orders Per Page" %}
+            </div>
+            <div class="apple-form-row">
+                {% include "components/form_field.html" with field=form.customers_per_page label="Customers Per Page" %}
+                {% include "components/form_field.html" with field=form.discounts_per_page label="Discounts Per Page" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Media -->
+    <div class="apple-card" style="margin-bottom: 24px;">
+        <div class="apple-card-header">
+            <h3 class="apple-card-title">Media</h3>
+        </div>
+        <div class="apple-card-body">
+            <div class="apple-form-row">
+                <div>
+                    <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Logo Icon</label>
+                    {% if settings_obj.logo_icon %}
+                    <div style="margin-bottom: 8px;">
+                        <img src="{{ settings_obj.logo_icon.url }}" alt="Current Logo" style="max-height: 60px; border-radius: 8px; border: 1px solid var(--apple-border);">
+                    </div>
+                    {% endif %}
+                    {{ form.logo_icon }}
+                </div>
+                <div>
+                    <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Favicon</label>
+                    {% if settings_obj.favicon %}
+                    <div style="margin-bottom: 8px;">
+                        <img src="{{ settings_obj.favicon.url }}" alt="Current Favicon" style="max-height: 40px; border-radius: 4px; border: 1px solid var(--apple-border);">
+                    </div>
+                    {% endif %}
+                    {{ form.favicon }}
+                </div>
+            </div>
+            {% include "components/form_field.html" with field=form.hero_image_url label="Hero Image URL" %}
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-bottom: 48px;">
+        {% include "components/button.html" with text="Save Settings" type="primary" %}
+    </div>
+</form>
+{% endblock %}

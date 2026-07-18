@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     # Local
+    'point_of_sale',
     'accounts',
     'products',
     'inventory',
