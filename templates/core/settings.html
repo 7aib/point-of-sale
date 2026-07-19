@@ -173,4 +173,63 @@
         {% include "components/button.html" with text="Save Settings" type="primary" %}
     </div>
 </form>
+
+<!-- Remove File Confirmation Modal -->
+<div id="removeFileModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 16px; padding: 28px 32px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(220,38,38,0.1); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1d1d1f;">Remove File</h3>
+                <p style="margin: 2px 0 0; font-size: 13px; color: #86868b;">This action cannot be undone.</p>
+            </div>
+        </div>
+        <p style="margin: 0 0 20px; font-size: 14px; color: #1d1d1f;">Are you sure you want to remove this file? You can upload a new one after saving.</p>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="cancelRemoveBtn" style="padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 1px solid #d2d2d7; background: #fff; color: #1d1d1f; cursor: pointer; font-family: inherit; transition: background 0.2s;">Cancel</button>
+            <button type="button" id="confirmRemoveBtn" style="padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: 8px; border: none; background: #dc2626; color: #fff; cursor: pointer; font-family: inherit; transition: background 0.2s;">Remove</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const modal = document.getElementById('removeFileModal');
+    const cancelBtn = document.getElementById('cancelRemoveBtn');
+    const confirmBtn = document.getElementById('confirmRemoveBtn');
+    let pendingCheckbox = null;
+
+    document.querySelectorAll('.apple-file-remove-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            pendingCheckbox = document.getElementById(this.dataset.clearId);
+            modal.style.display = 'flex';
+        });
+    });
+
+    cancelBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+        pendingCheckbox = null;
+    });
+
+    confirmBtn.addEventListener('click', function() {
+        if (pendingCheckbox) {
+            pendingCheckbox.checked = true;
+            var wrapper = pendingCheckbox.closest('.apple-file-current');
+            if (wrapper) wrapper.remove();
+        }
+        modal.style.display = 'none';
+        pendingCheckbox = null;
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            pendingCheckbox = null;
+        }
+    });
+})();
+</script>
 {% endblock %}

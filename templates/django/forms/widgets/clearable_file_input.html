@@ -1,10 +1,11 @@
 {% if widget.is_initial %}
 <div class="apple-file-current" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
     <a href="{{ widget.value.url }}" target="_blank" style="font-size: 12px; color: var(--apple-blue); text-decoration: none; font-weight: 500;">{{ widget.value.name }}</a>
-    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; cursor: pointer; white-space: nowrap; font-weight: 500;">
-        <input type="checkbox" name="{{ widget.clear_checkbox_name }}" id="{{ widget.clear_checkbox_id }}" style="margin: 0; cursor: pointer;">
+    <label class="apple-file-remove-link" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; cursor: pointer; white-space: nowrap; font-weight: 500;" data-clear-id="{{ widget.clear_checkbox_id }}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
         <span>Remove</span>
     </label>
+    <input type="checkbox" name="{{ widget.clear_checkbox_name }}" id="{{ widget.clear_checkbox_id }}" style="display: none;">
 </div>
 {% endif %}
 <input type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% for attr, val in widget.attrs.items %} {{ attr }}="{{ val }}"{% endfor %}>
