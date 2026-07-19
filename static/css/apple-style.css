@@ -43,6 +43,28 @@ body {
     padding: 20px;
 }
 
+.auth-body-hero {
+    background-color: var(--apple-bg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+.auth-body-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.auth-body-hero .auth-container {
+    position: relative;
+    z-index: 1;
+}
+
 .auth-container {
     width: 100%;
     max-width: 440px;

@@ -179,8 +179,8 @@ def customer_report(request):
     # Top customers by revenue
     top_customers = Customer.objects.filter(is_deleted=False).annotate(
         order_count=Count("orders"),
-        total_spent=Sum("orders__total_amount"),
-    ).filter(order_count__gt=0).order_by("-total_spent")[:20]
+        revenue=Sum("orders__total_amount"),
+    ).filter(order_count__gt=0).order_by("-revenue")[:20]
 
     # Customer acquisition (new customers per month, last 12 months)
     twelve_months_ago = timezone.now() - timedelta(days=365)

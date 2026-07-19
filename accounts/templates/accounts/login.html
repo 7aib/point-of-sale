@@ -2,6 +2,9 @@
 
 {% block title %}Sign In - {{ PROJECT_NAME }}{% endblock %}
 
+{% block auth_body_class %} auth-body-hero{% endblock %}
+{% block auth_body_style %}{% if HERO_IMAGE_URL %}style="background-image: url('{{ HERO_IMAGE_URL }}'); background-size: cover; background-position: center;"{% endif %}{% endblock %}
+
 {% block content %}
 <div class="auth-container">
     <div class="auth-card">
