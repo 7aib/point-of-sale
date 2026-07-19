@@ -1,8 +1,9 @@
 {% if widget.is_initial %}
-<div class="apple-file-current" style="margin-bottom: 6px; font-size: 12px; color: var(--apple-text-secondary);">
-    <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+<div class="apple-file-current" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+    <a href="{{ widget.value.url }}" target="_blank" style="font-size: 12px; color: var(--apple-blue); text-decoration: none; font-weight: 500;">{{ widget.value.name }}</a>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #dc2626; cursor: pointer; white-space: nowrap; font-weight: 500;">
         <input type="checkbox" name="{{ widget.clear_checkbox_name }}" id="{{ widget.clear_checkbox_id }}" style="margin: 0; cursor: pointer;">
-        <span>Remove current file</span>
+        <span>Remove</span>
     </label>
 </div>
 {% endif %}
