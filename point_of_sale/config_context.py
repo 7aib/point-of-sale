@@ -41,13 +41,10 @@ _DEFAULTS = {
 
 
 def project_config(request):
-    # Try loading from DB; fall back to config.py defaults
     try:
         from point_of_sale.models import StoreSettings
-        from django.db import connection
-        if connection.table_exists('point_of_sale_storesettings'):
-            db_settings = StoreSettings.load()
-            return db_settings.to_dict()
+        db_settings = StoreSettings.load()
+        return db_settings.to_dict()
     except Exception:
         pass
     return _DEFAULTS
