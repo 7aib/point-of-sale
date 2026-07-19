@@ -1,6 +1,30 @@
 from django import forms
+from django.utils.safestring import mark_safe
 
 from .models import StoreSettings
+
+
+class AppleFileInput(forms.ClearableFileInput):
+    """Renders only the file input, no 'Currently/Clear/Change:' text."""
+
+    def __init__(self, attrs=None):
+        default_attrs = {"class": "apple-file-input", "accept": "image/*"}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(attrs=default_attrs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return super().render(name, value, attrs=attrs, renderer=renderer)
+
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+        ctx["widget"].pop("initial_text", None)
+        ctx["widget"].pop("input_text", None)
+        ctx["widget"].pop("clear_checkbox_label", None)
+        ctx["widget"].pop("checkbox_name", None)
+        ctx["widget"].pop("checkbox_id", None)
+        ctx["widget"].pop("is_initial", None)
+        return ctx
 
 
 class StoreSettingsForm(forms.ModelForm):
@@ -19,7 +43,7 @@ class StoreSettingsForm(forms.ModelForm):
         widgets = {
             "project_name": forms.TextInput(attrs={"class": "form-control"}),
             "project_full_name": forms.TextInput(attrs={"class": "form-control"}),
-            "logo_icon": forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "logo_icon": AppleFileInput(),
             "logo_text": forms.TextInput(attrs={"class": "form-control", "placeholder": "Short brand name"}),
             "slogan": forms.TextInput(attrs={"class": "form-control"}),
             "website_url": forms.URLInput(attrs={"class": "form-control"}),
@@ -31,7 +55,7 @@ class StoreSettingsForm(forms.ModelForm):
             "store_currency_symbol": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Rs"}),
             "country_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. PK"}),
             "hero_image_url": forms.URLInput(attrs={"class": "form-control"}),
-            "favicon": forms.ClearableFileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "favicon": AppleFileInput(),
             "social_facebook": forms.URLInput(attrs={"class": "form-control"}),
             "social_instagram": forms.URLInput(attrs={"class": "form-control"}),
             "social_twitter": forms.URLInput(attrs={"class": "form-control"}),

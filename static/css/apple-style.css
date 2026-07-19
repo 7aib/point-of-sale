@@ -225,6 +225,60 @@ body {
     margin-bottom: 6px;
 }
 
+/* Apple File Input Component */
+.apple-file-current {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: var(--apple-bg);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--apple-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.apple-file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+    color: var(--apple-text-secondary);
+    font-size: 12px;
+}
+
+.apple-file-info a {
+    color: var(--apple-text);
+    text-decoration: none;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apple-file-info a:hover {
+    color: var(--apple-blue);
+}
+
+.apple-file-remove-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #dc2626;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+    margin-left: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.apple-file-remove-link:hover {
+    background: rgba(220, 38, 38, 0.08);
+}
+
 /* Buttons */
 .btn-apple {
     display: inline-flex;
