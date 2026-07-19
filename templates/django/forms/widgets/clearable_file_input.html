@@ -1,0 +1,9 @@
+{% if widget.is_initial %}
+<div class="apple-file-current" style="margin-bottom: 6px; font-size: 12px; color: var(--apple-text-secondary);">
+    <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+        <input type="checkbox" name="{{ widget.clear_checkbox_name }}" id="{{ widget.clear_checkbox_id }}" style="margin: 0; cursor: pointer;">
+        <span>Remove current file</span>
+    </label>
+</div>
+{% endif %}
+<input type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% for attr, val in widget.attrs.items %} {{ attr }}="{{ val }}"{% endfor %}>
