@@ -131,11 +131,17 @@
                 <div>
                     <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Logo Icon</label>
                     {% if settings_obj.logo_icon %}
-                    <div style="margin-bottom: 8px;">
-                        <img src="{{ settings_obj.logo_icon.url }}" alt="Current Logo" style="max-height: 60px; border-radius: 8px; border: 1px solid var(--apple-border);">
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <img src="{{ settings_obj.logo_icon.url }}" alt="Current Logo" style="max-height: 56px; width: 56px; border-radius: 12px; border: 1px solid var(--apple-border); object-fit: cover;">
+                        <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.4;">
+                            <div style="font-weight: 500; color: var(--apple-text-primary);">Current logo</div>
+                            {{ settings_obj.logo_icon.name|cut:"branding/" }}
+                        </div>
                     </div>
                     {% endif %}
-                    {{ form.logo_icon }}
+                    <div class="apple-file-input-wrapper">
+                        {{ form.logo_icon }}
+                    </div>
                     {% if form.logo_icon.help_text %}
                     <span class="apple-form-help">{{ form.logo_icon.help_text }}</span>
                     {% endif %}
@@ -143,11 +149,17 @@
                 <div>
                     <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Favicon</label>
                     {% if settings_obj.favicon %}
-                    <div style="margin-bottom: 8px;">
-                        <img src="{{ settings_obj.favicon.url }}" alt="Current Favicon" style="max-height: 40px; border-radius: 4px; border: 1px solid var(--apple-border);">
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <img src="{{ settings_obj.favicon.url }}" alt="Current Favicon" style="max-height: 32px; width: 32px; border-radius: 6px; border: 1px solid var(--apple-border); object-fit: cover;">
+                        <div style="font-size: 12px; color: var(--apple-text-secondary); line-height: 1.4;">
+                            <div style="font-weight: 500; color: var(--apple-text-primary);">Current favicon</div>
+                            {{ settings_obj.favicon.name|cut:"branding/" }}
+                        </div>
                     </div>
                     {% endif %}
-                    {{ form.favicon }}
+                    <div class="apple-file-input-wrapper">
+                        {{ form.favicon }}
+                    </div>
                     {% if form.favicon.help_text %}
                     <span class="apple-form-help">{{ form.favicon.help_text }}</span>
                     {% endif %}

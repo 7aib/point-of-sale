@@ -128,7 +128,79 @@ body {
 }
 
 .form-control::placeholder {
-    color: var(--apple-text-secondary);
+    color: var(--apple-text-muted);
+}
+
+/* Apple File Input */
+.apple-form-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--apple-font);
+    color: var(--apple-text);
+    background: var(--apple-card);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--apple-radius-sm);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+
+.apple-form-input:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.apple-file-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.apple-file-input-wrapper input[type="file"] {
+    position: relative;
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--apple-font);
+    color: var(--apple-text);
+    background: var(--apple-bg);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--apple-radius-sm);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    z-index: 1;
+}
+
+.apple-file-input-wrapper input[type="file"]:hover {
+    border-color: var(--apple-blue);
+}
+
+.apple-file-input-wrapper input[type="file"]:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.apple-file-input-wrapper input[type="file"]::file-selector-button {
+    font-family: var(--apple-font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--apple-blue);
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--apple-border);
+    margin-right: 12px;
+    padding: 2px 12px 2px 0;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.apple-file-input-wrapper input[type="file"]::file-selector-button:hover {
+    color: var(--apple-blue-hover);
+}
+
+.apple-file-input-wrapper input[type="file"]:has(+ .clearablefileinput) {
+    margin-bottom: 6px;
 }
 
 /* Buttons */
