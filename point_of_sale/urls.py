@@ -17,7 +17,6 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('settings/', views.settings_view, name='settings'),
     path('', RedirectView.as_view(url=reverse_lazy('accounts:login')), name='home'),
-    path('', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,11 +25,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     # Third party
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
     'crispy_forms',
     'crispy_bootstrap5',
     # Local
@@ -52,7 +46,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'point_of_sale.urls'
@@ -97,44 +90,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # =============================================================================
-# django-allauth
+# Auth
 # =============================================================================
-SITE_ID = 1
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-ACCOUNT_LOGIN_METHODS = {'username'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'first_name*', 'last_name*']
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGOUT_ON_GET = True
-
 LOGIN_REDIRECT_URL = '/accounts/profile/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
-ACCOUNT_LOGIN_REDIRECT_URL = '/accounts/profile/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
-
-# Social account providers
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': '',
-            'secret': '',
-            'key': '',
-        },
-        'SCOPE': ['profile', 'email'],
-    },
-    'github': {
-        'APP': {
-            'client_id': '',
-            'secret': '',
-            'key': '',
-        },
-        'SCOPE': ['user:email'],
-    },
-}
 
 # =============================================================================
 # Crispy Forms

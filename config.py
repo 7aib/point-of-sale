@@ -30,8 +30,8 @@ SOCIAL_FACEBOOK = "https://facebook.com/"
 SOCIAL_INSTAGRAM = "https://instagram.com/"
 SOCIAL_TWITTER = "https://twitter.com/"
 
-# Tax Settings
-TAX_RATE = 0.0  # e.g. 0.17 for 17% GST
+# Tax Settings (percentage, e.g. 17 for 17%)
+TAX_RATE = 0.0
 TAX_LABEL = "GST"
 
 # Receipt Settings

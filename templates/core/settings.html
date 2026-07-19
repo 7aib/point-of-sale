@@ -86,7 +86,7 @@
         </div>
         <div class="apple-card-body">
             <div class="apple-form-row">
-                {% include "components/form_field.html" with field=form.tax_rate label="Tax Rate (e.g. 0.17 for 17%)" %}
+                {% include "components/form_field.html" with field=form.tax_rate label="Tax Rate (e.g. 17 for 17%)" %}
                 {% include "components/form_field.html" with field=form.tax_label label="Tax Label (e.g. GST)" %}
             </div>
         </div>
@@ -137,6 +137,9 @@
                     </div>
                     {% endif %}
                     {{ form.logo_icon }}
+                    {% if form.logo_icon.help_text %}
+                    <span class="apple-form-help">{{ form.logo_icon.help_text }}</span>
+                    {% endif %}
                 </div>
                 <div>
                     <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Favicon</label>
@@ -146,6 +149,9 @@
                     </div>
                     {% endif %}
                     {{ form.favicon }}
+                    {% if form.favicon.help_text %}
+                    <span class="apple-form-help">{{ form.favicon.help_text }}</span>
+                    {% endif %}
                 </div>
             </div>
             {% include "components/form_field.html" with field=form.hero_image_url label="Hero Image URL" %}

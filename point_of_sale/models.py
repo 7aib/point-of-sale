@@ -16,7 +16,10 @@ class StoreSettings(models.Model):
     # Branding
     project_name = models.CharField(max_length=200, default=PROJECT_NAME)
     project_full_name = models.CharField(max_length=300, default=PROJECT_FULL_NAME)
-    logo_icon = models.ImageField(upload_to="branding/", blank=True, null=True)
+    logo_icon = models.ImageField(
+        upload_to="branding/", blank=True, null=True,
+        help_text="Store logo. Recommended: 256x256 px, PNG with transparent background.",
+    )
     logo_text = models.CharField(max_length=50, default=LOGO_TEXT)
     slogan = models.CharField(max_length=300, default=SLOGAN, blank=True)
 
@@ -34,7 +37,10 @@ class StoreSettings(models.Model):
 
     # Media
     hero_image_url = models.URLField(max_length=500, default=HERO_IMAGE_URL, blank=True)
-    favicon = models.ImageField(upload_to="branding/", blank=True, null=True)
+    favicon = models.ImageField(
+        upload_to="branding/", blank=True, null=True,
+        help_text="Browser tab icon. Recommended: 32x32 or 64x64 px, PNG/ICO format.",
+    )
 
     # Social Links
     social_facebook = models.URLField(max_length=500, default=SOCIAL_FACEBOOK, blank=True)
@@ -43,8 +49,8 @@ class StoreSettings(models.Model):
 
     # Tax Settings
     tax_rate = models.DecimalField(
-        max_digits=5, decimal_places=4, default=TAX_RATE,
-        help_text="Global tax rate as decimal (e.g. 0.17 for 17%)",
+        max_digits=5, decimal_places=2, default=TAX_RATE,
+        help_text="Global tax rate in % (e.g. 17 for 17%)",
     )
     tax_label = models.CharField(max_length=50, default=TAX_LABEL)
 

@@ -31,17 +31,6 @@ class SoftDeleteManager(models.Manager):
         return super().get_queryset()
 
 
-class SoftDeleteUserManager(SoftDeleteManager):
-    """UserManager + SoftDelete: skips deleted users by default, keeps auth methods."""
-    use_in_migrations = True
-
-    def get_by_natural_key(self, username):
-        return super().get_queryset().get(username=username)
-
-    def get_natural_key(self, obj):
-        return (obj.username,)
-
-
 class SoftDeleteMixin(models.Model):
     """Soft delete support — records are never actually removed from DB."""
     is_deleted = models.BooleanField(default=False, db_index=True)

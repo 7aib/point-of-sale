@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 
 from point_of_sale.mixins import TimestampMixin, SoftDeleteMixin
@@ -70,9 +70,10 @@ class Order(TimestampMixin, models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            last = Order.objects.order_by("-id").first()
-            num = (last.id + 1) if last else 1
-            self.order_number = f"ORD-{num:06d}"
+            with transaction.atomic():
+                last = Order.objects.select_for_update().order_by("-id").first()
+                num = (last.id + 1) if last else 1
+                self.order_number = f"ORD-{num:06d}"
         super().save(*args, **kwargs)
 
 

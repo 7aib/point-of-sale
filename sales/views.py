@@ -50,7 +50,6 @@ def dashboard(request):
     recent_orders = Order.objects.select_related("customer", "performed_by")[:10]
 
     # Top products
-    from django.db.models import Sum as DS
     top_products = Product.objects.annotate(
         sold=Count("order_items")
     ).order_by("-sold")[:5]
@@ -407,7 +406,7 @@ def _recalculate_order_totals(order, discount_amount=None):
         if item.product.tax_rate > 0:
             tax_amount += item.total_price * (item.product.tax_rate / 100)
         elif TAX_RATE > 0:
-            tax_amount += item.total_price * TAX_RATE
+            tax_amount += item.total_price * (TAX_RATE / 100)
 
     if discount_amount is None:
         discount_amount = order.discount_amount
