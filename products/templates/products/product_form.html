@@ -23,7 +23,25 @@
 
             <div class="apple-form-row">
                 {% include "components/form_field.html" with field=form.sku label="SKU" %}
-                {% include "components/form_field.html" with field=form.barcode label="Barcode" %}
+                <div>
+                    <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">Barcode</label>
+                    <div style="position: relative;">
+                        {{ form.barcode }}
+                        <button type="button" id="scan-barcode-btn" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; font-family: inherit; border-radius: 6px; border: 1px solid var(--apple-border); background: #fff; color: var(--apple-blue); cursor: pointer; transition: all 0.2s;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+                            Scan
+                        </button>
+                    </div>
+                    <div id="scan-status" style="display: none; margin-top: 6px; font-size: 12px; font-weight: 500;"></div>
+                    {% if form.barcode.help_text %}
+                    <span class="apple-form-help">{{ form.barcode.help_text }}</span>
+                    {% endif %}
+                    {% if form.barcode.errors %}
+                    <ul class="apple-form-errors">
+                        {% for error in form.barcode.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
             </div>
 
             {% include "components/form_field.html" with field=form.category label="Category" %}
@@ -57,4 +75,42 @@
         </form>
     </div>
 </div>
+
+<script>
+(function() {
+    var barcodeInput = document.querySelector('input[name="barcode"]');
+    var scanBtn = document.getElementById('scan-barcode-btn');
+    var scanStatus = document.getElementById('scan-status');
+    var scanTimer = null;
+
+    // Prevent form submit on Enter when scanning
+    barcodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    // Show confirmation after scanner finishes typing
+    barcodeInput.addEventListener('input', function() {
+        clearTimeout(scanTimer);
+        var val = this.value.trim();
+        if (val.length >= 4) {
+            scanTimer = setTimeout(function() {
+                scanStatus.style.display = 'block';
+                scanStatus.style.color = '#16a34a';
+                scanStatus.textContent = '✓ Barcode captured: ' + barcodeInput.value.trim();
+            }, 300);
+        }
+    });
+
+    // Scan button: focus input
+    scanBtn.addEventListener('click', function() {
+        barcodeInput.value = '';
+        barcodeInput.focus();
+        scanStatus.style.display = 'block';
+        scanStatus.style.color = '#0071e3';
+        scanStatus.textContent = 'Ready — scan your barcode';
+    });
+})();
+</script>
 {% endblock %}

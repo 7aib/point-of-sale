@@ -35,7 +35,7 @@ class ProductForm(forms.ModelForm):
             "slug": forms.TextInput(attrs={"placeholder": "auto-generated"}),
             "description": forms.Textarea(attrs={"placeholder": "Product description", "rows": 3}),
             "sku": forms.TextInput(attrs={"placeholder": "e.g. PROD-001"}),
-            "barcode": forms.TextInput(attrs={"placeholder": "e.g. 5901234123457"}),
+            "barcode": forms.TextInput(attrs={"placeholder": "e.g. 5901234123457", "class": "form-control", "autocomplete": "off"}),
             "category": forms.Select(),
             "cost_price": forms.NumberInput(attrs={"placeholder": "0.00", "step": "0.01"}),
             "selling_price": forms.NumberInput(attrs={"placeholder": "0.00", "step": "0.01"}),
