@@ -37,9 +37,9 @@ class Discount(TimestampMixin, ActiveMixin, models.Model):
         return f"{self.name} ({self.get_display_value()})"
 
     def clean(self):
-        if self.discount_type == self.DiscountType.PERCENTAGE and self.value > 100:
+        if self.discount_type == self.DiscountType.PERCENTAGE and self.value and self.value > 100:
             raise ValidationError({"value": "Percentage cannot exceed 100%."})
-        if self.value <= 0:
+        if self.value is not None and self.value <= 0:
             raise ValidationError({"value": "Discount value must be greater than 0."})
         if self.valid_to and self.valid_from and self.valid_to <= self.valid_from:
             raise ValidationError({"valid_to": "End date must be after start date."})
@@ -119,9 +119,9 @@ class Coupon(TimestampMixin, ActiveMixin, models.Model):
         return f"{self.code} - {self.get_display_value()}"
 
     def clean(self):
-        if self.discount_type == Discount.DiscountType.PERCENTAGE and self.discount_value > 100:
+        if self.discount_type == Discount.DiscountType.PERCENTAGE and self.discount_value and self.discount_value > 100:
             raise ValidationError({"discount_value": "Percentage cannot exceed 100%."})
-        if self.discount_value <= 0:
+        if self.discount_value is not None and self.discount_value <= 0:
             raise ValidationError({"discount_value": "Discount value must be greater than 0."})
         if self.valid_to and self.valid_from and self.valid_to <= self.valid_from:
             raise ValidationError({"valid_to": "End date must be after start date."})
