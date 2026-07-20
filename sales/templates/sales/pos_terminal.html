@@ -434,10 +434,14 @@
         <div class="pos-products-header">
             <div style="position: relative; flex: 1;">
                 <input type="text" id="barcode-input" placeholder="Scan barcode or search product..." autofocus autocomplete="off">
-                <svg class="barcode-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+                <svg class="barcode-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%);"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 600; color: var(--apple-text-secondary); background: var(--apple-bg); border: 1px solid var(--apple-border); border-radius: 4px; padding: 2px 6px;">F2</span>
             </div>
-            <input type="text" id="product-search" placeholder="Search name..."
-                   style="width: 200px; padding: 12px 16px; font-size: 14px; font-family: var(--apple-font); border: 2px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+            <div style="position: relative;">
+                <input type="text" id="product-search" placeholder="Search name..."
+                       style="width: 200px; padding: 12px 16px; padding-right: 40px; font-size: 14px; font-family: var(--apple-font); border: 2px solid var(--apple-border); border-radius: var(--apple-radius-sm); outline: none;">
+                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: 600; color: var(--apple-text-secondary); background: var(--apple-bg); border: 1px solid var(--apple-border); border-radius: 4px; padding: 2px 6px;">F3</span>
+            </div>
         </div>
         <div class="pos-products-grid" id="product-grid">
             {% for product in products %}
@@ -517,9 +521,11 @@
             <!-- Checkout -->
             <button class="pos-checkout-btn" id="checkout-btn" onclick="completeSale()" disabled>
                 Complete Sale
+                <span style="margin-left: 8px; font-size: 10px; opacity: 0.6; font-weight: 600;">F9</span>
             </button>
             <button class="pos-clear-btn" onclick="clearCart()">
                 Clear Cart
+                <span style="margin-left: 8px; font-size: 10px; opacity: 0.6; font-weight: 600;">F4</span>
             </button>
         </div>
     </div>
