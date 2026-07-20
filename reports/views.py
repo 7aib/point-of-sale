@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.db.models import Q, Sum, Count, Avg, F
 from django.utils import timezone
 from django.db.models.functions import TruncDate, TruncMonth, TruncHour
+from django.utils.dateparse import parse_date
 
 from datetime import timedelta
 from decimal import Decimal
@@ -147,21 +148,33 @@ def sales_report(request):
 
 @login_required
 def product_report(request):
-    # Product performance
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+
+    d_from = parse_date(date_from) if date_from else None
+    d_to = parse_date(date_to) if date_to else None
+
     products = Product.objects.filter(is_deleted=False).annotate(
         total_sold=Count("order_items"),
         total_revenue=Sum("order_items__total_price"),
-        total_qty=Sum("order_items__quantity"),
     ).order_by("-total_revenue")
 
-    # Category performance
+    if d_from:
+        products = products.filter(order_items__order__created_at__date__gte=d_from).distinct()
+    if d_to:
+        products = products.filter(order_items__order__created_at__date__lte=d_to).distinct()
+
     categories = Category.objects.filter(is_active=True).annotate(
         product_count=Count("products"),
         total_sold=Count("products__order_items"),
         total_revenue=Sum("products__order_items__total_price"),
     ).order_by("-total_revenue")
 
-    # Low stock products
+    if d_from:
+        categories = categories.filter(products__order_items__order__created_at__date__gte=d_from).distinct()
+    if d_to:
+        categories = categories.filter(products__order_items__order__created_at__date__lte=d_to).distinct()
+
     low_stock_products = Product.objects.filter(
         is_deleted=False, is_active=True,
         stock_quantity__lte=F("low_stock_threshold"),
@@ -171,16 +184,31 @@ def product_report(request):
         "products": products,
         "categories": categories,
         "low_stock_products": low_stock_products,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 
 @login_required
 def customer_report(request):
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+
+    d_from = parse_date(date_from) if date_from else None
+    d_to = parse_date(date_to) if date_to else None
+
     # Top customers by revenue
     top_customers = Customer.objects.filter(is_deleted=False).annotate(
         order_count=Count("orders"),
         revenue=Sum("orders__total_amount"),
-    ).filter(order_count__gt=0).order_by("-revenue")[:20]
+    ).filter(order_count__gt=0)
+
+    if d_from:
+        top_customers = top_customers.filter(orders__created_at__date__gte=d_from)
+    if d_to:
+        top_customers = top_customers.filter(orders__created_at__date__lte=d_to)
+
+    top_customers = top_customers.distinct().order_by("-revenue")[:20]
 
     # Customer acquisition (new customers per month, last 12 months)
     twelve_months_ago = timezone.now() - timedelta(days=365)
@@ -202,6 +230,8 @@ def customer_report(request):
         "customer_acquisition": list(customer_acquisition),
         "total_customers": total_customers,
         "customers_with_orders": customers_with_orders,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 

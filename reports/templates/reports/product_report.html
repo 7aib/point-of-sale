@@ -8,6 +8,19 @@
 {% endblock %}
 
 {% block content %}
+<!-- Date Filter -->
+<div class="apple-card" style="margin-bottom: 24px;">
+    <div class="apple-card-body" style="padding: 16px 24px;">
+        <form method="get" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 14px; font-weight: 500;">Date Range:</label>
+            <input type="date" name="date_from" value="{{ date_from }}" class="apple-form-input">
+            <span style="color: var(--apple-text-secondary);">to</span>
+            <input type="date" name="date_to" value="{{ date_to }}" class="apple-form-input">
+            <button type="submit" class="apple-btn apple-btn-primary apple-btn-sm">Generate Report</button>
+        </form>
+    </div>
+</div>
+
 <div class="apple-grid" style="grid-template-columns: 2fr 1fr; gap: 24px;">
     <!-- Products Table -->
     <div class="apple-card">
