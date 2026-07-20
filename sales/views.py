@@ -564,6 +564,10 @@ def pos_create_order(request):
         "order_id": order.pk,
         "order_number": order.order_number,
         "total": str(order.total_amount),
+        "subtotal": str(order.subtotal),
+        "tax": str(order.tax_amount),
         "discount": str(discount_amount),
+        "payment_method": order.get_payment_method_display(),
+        "date": order.created_at.strftime("%b %d, %Y %H:%M"),
         "redirect": f"/sales/orders/{order.pk}/",
     })

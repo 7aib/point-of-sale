@@ -533,8 +533,16 @@
         <p class="order-num" id="success-order-num">Order #ORD-000000</p>
         <p class="order-total" id="success-total">Rs 0</p>
         <div class="pos-success-actions">
-            <button class="apple-btn apple-btn-secondary" onclick="closeSuccess()">New Sale</button>
-            <a class="apple-btn apple-btn-primary" id="success-view-link" href="#">View Order</a>
+            <button class="apple-btn apple-btn-secondary" onclick="closeSuccess()" id="btn-new-sale">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Sale
+                <span style="margin-left: 6px; font-size: 10px; opacity: 0.5;">F5</span>
+            </button>
+            <button class="apple-btn apple-btn-primary" onclick="printReceipt()" id="btn-print">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Receipt
+                <span style="margin-left: 6px; font-size: 10px; opacity: 0.5;">F6</span>
+            </button>
         </div>
     </div>
 </div>
@@ -762,7 +770,17 @@ function completeSale() {
         // Show success
         document.getElementById('success-order-num').textContent = `Order ${data.order_number}`;
         document.getElementById('success-total').textContent = `${CURRENCY} ${data.total}`;
-        document.getElementById('success-view-link').href = data.redirect;
+        lastOrderData = {
+            orderNumber: data.order_number,
+            total: data.total,
+            subtotal: data.subtotal,
+            tax: data.tax,
+            discount: data.discount,
+            paymentMethod: data.payment_method,
+            date: data.date,
+            storeName: '{{ STORE_NAME|escapejs }}',
+            storeAddress: '{{ STORE_ADDRESS|escapejs }}',
+        };
         document.getElementById('success-overlay').classList.add('show');
     })
     .catch(() => {
@@ -780,6 +798,51 @@ function closeSuccess() {
     document.getElementById('pos-discount-row').style.display = 'none';
     renderCart();
     document.getElementById('barcode-input').focus();
+}
+
+let lastOrderData = null;
+
+function printReceipt() {
+    if (!lastOrderData) return;
+    const items = cart.map(i => `<tr><td>${i.name}</td><td style="text-align:center;">${i.quantity}</td><td style="text-align:right;">${CURRENCY} ${(i.price * i.quantity).toFixed(2)}</td></tr>`).join('');
+    const receiptHTML = `
+<!DOCTYPE html>
+<html><head><title>Receipt</title>
+<style>
+body{font-family:'Courier New',monospace;width:300px;margin:0 auto;padding:20px;font-size:13px;color:#000;}
+h2{text-align:center;margin:0 0 4px;font-size:16px;}
+.subtitle{text-align:center;font-size:11px;color:#666;margin-bottom:16px;}
+hr{border:none;border-top:1px dashed #000;margin:12px 0;}
+table{width:100%;border-collapse:collapse;}
+td{padding:4px 0;}
+.line-total td{font-weight:bold;border-top:1px dashed #000;padding-top:8px;font-size:15px;}
+.total-row td{font-weight:bold;font-size:16px;border-top:2px solid #000;padding-top:8px;}
+.footer{text-align:center;margin-top:16px;font-size:11px;color:#666;}
+</style></head><body>
+<h2>${lastOrderData.storeName}</h2>
+<div class="subtitle">${lastOrderData.storeAddress}</div>
+<hr>
+<table><tr><td>Order:</td><td style="text-align:right;">${lastOrderData.orderNumber}</td></tr>
+<tr><td>Date:</td><td style="text-align:right;">${lastOrderData.date}</td></tr>
+<tr><td>Payment:</td><td style="text-align:right;">${lastOrderData.paymentMethod}</td></tr></table>
+<hr>
+<table><thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
+<tbody>${items}</tbody></table>
+<hr>
+<table>
+<tr><td>Subtotal</td><td style="text-align:right;">${CURRENCY} ${lastOrderData.subtotal}</td></tr>
+${parseFloat(lastOrderData.tax) > 0 ? `<tr><td>Tax</td><td style="text-align:right;">${CURRENCY} ${lastOrderData.tax}</td></tr>` : ''}
+${parseFloat(lastOrderData.discount) > 0 ? `<tr><td>Discount</td><td style="text-align:right;">-${CURRENCY} ${lastOrderData.discount}</td></tr>` : ''}
+<tr class="total-row"><td>TOTAL</td><td style="text-align:right;">${CURRENCY} ${lastOrderData.total}</td></tr>
+</table>
+<hr>
+<div class="footer">Thank you for your purchase!</div>
+<div class="footer" style="margin-top: 8px; border-top: 1px dashed #000; padding-top: 8px; font-size: 10px;">Developed by Zohaib Rana<br>+923017222030 | zohaibrana03@gmail.com</div>
+</body></html>`;
+    const w = window.open('', '_blank', 'width=400,height=600');
+    w.document.write(receiptHTML);
+    w.document.close();
+    setTimeout(() => { w.print(); }, 300);
 }
 
 // =============================================================================
@@ -810,6 +873,20 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'F4') {
         e.preventDefault();
         clearCart();
+    }
+    // F5 = new sale (when success overlay is open)
+    if (e.key === 'F5') {
+        e.preventDefault();
+        if (document.getElementById('success-overlay').classList.contains('show')) {
+            closeSuccess();
+        }
+    }
+    // F6 = print receipt (when success overlay is open)
+    if (e.key === 'F6') {
+        e.preventDefault();
+        if (document.getElementById('success-overlay').classList.contains('show')) {
+            printReceipt();
+        }
     }
     // F9 = complete sale
     if (e.key === 'F9') {
