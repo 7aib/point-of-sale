@@ -136,7 +136,9 @@
                         <tbody>
                             {% for payment in payments %}
                             <tr>
-                                <td style="font-weight: 600;">{{ STORE_CURRENCY_SYMBOL }} {{ payment.amount }}</td>
+                                <td style="font-weight: 600; {% if payment.status == 'refunded' %}color: #dc2626;{% endif %}">
+                                    {% if payment.status == 'refunded' %}-{% endif %}{{ STORE_CURRENCY_SYMBOL }} {{ payment.amount }}
+                                </td>
                                 <td>
                                     {% if payment.payment_method == "cash" %}
                                     {% include "components/badge.html" with text="Cash" type="success" %}
@@ -160,7 +162,7 @@
                                     {% if payment.status == "completed" %}
                                     <form method="post" action="{% url 'sales:payment_refund' pk=payment.pk %}" style="margin:0;" onsubmit="return confirm('Refund this payment?');">
                                         {% csrf_token %}
-                                        <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;" title="Refund">&#8634;</button>
+                                        <button type="submit" class="apple-btn apple-btn-ghost apple-btn-sm" style="color: #dc2626;">Refund</button>
                                     </form>
                                     {% endif %}
                                 </td>

@@ -25,19 +25,19 @@ def dashboard(request):
     today = timezone.now().date()
     month_start = today.replace(day=1)
 
-    # Today's stats
-    today_orders = Order.objects.filter(created_at__date=today)
+    # Today's stats (exclude refunded)
+    today_orders = Order.objects.filter(created_at__date=today).exclude(status="refunded")
     today_revenue = today_orders.aggregate(total=Sum("total_amount"))["total"] or 0
     today_count = today_orders.count()
 
-    # This month
-    month_orders = Order.objects.filter(created_at__date__gte=month_start)
+    # This month (exclude refunded)
+    month_orders = Order.objects.filter(created_at__date__gte=month_start).exclude(status="refunded")
     month_revenue = month_orders.aggregate(total=Sum("total_amount"))["total"] or 0
     month_count = month_orders.count()
 
-    # All time
-    total_revenue = Order.objects.aggregate(total=Sum("total_amount"))["total"] or 0
-    total_orders = Order.objects.count()
+    # All time (exclude refunded)
+    total_revenue = Order.objects.exclude(status="refunded").aggregate(total=Sum("total_amount"))["total"] or 0
+    total_orders = Order.objects.exclude(status="refunded").count()
 
     # Pending payments
     pending_orders = Order.objects.filter(
@@ -73,7 +73,7 @@ def dashboard(request):
 
 @login_required
 def order_list(request):
-    queryset = Order.objects.select_related("customer", "performed_by")
+    queryset = Order.objects.select_related("customer", "performed_by").exclude(status="refunded")
 
     # Search
     search = request.GET.get("search", "").strip()
@@ -282,7 +282,27 @@ def payment_refund(request, pk):
     if payment.status == Payment.PaymentStatus.COMPLETED:
         payment.status = Payment.PaymentStatus.REFUNDED
         payment.save(update_fields=["status"])
-        messages.success(request, f"Payment {payment.pk} refunded successfully!")
+
+        # Restore stock for all items in the order
+        from inventory.models import StockMovement
+        for item in payment.order.items.select_related("product").all():
+            product = item.product
+            product.stock_quantity += item.quantity
+            product.save(update_fields=["stock_quantity"])
+            StockMovement.objects.create(
+                product=product,
+                movement_type="in",
+                quantity=item.quantity,
+                reference=payment.order.order_number,
+                notes=f"Refund for {payment.order.order_number}",
+                performed_by=request.user,
+            )
+
+        # Update order status to refunded
+        payment.order.status = "refunded"
+        payment.order.save(update_fields=["status"])
+
+        messages.success(request, f"Payment {payment.pk} refunded successfully! Stock restored.")
     else:
         messages.error(request, "Only completed payments can be refunded.")
     return redirect("sales:order_detail", pk=payment.order.pk)

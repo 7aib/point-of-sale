@@ -272,6 +272,26 @@ class DashboardViewTest(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.context["total_orders"], 2)
 
+    def test_excludes_refunded_from_revenue(self):
+        self.client.force_login(self.user)
+        order1 = make_order()
+        make_order_item(order=order1, quantity=2, unit_price=Decimal("25.00"))
+        order1.subtotal = Decimal("50.00")
+        order1.total_amount = Decimal("50.00")
+        order1.save(update_fields=["subtotal", "total_amount"])
+        order2 = make_order()
+        make_order_item(order=order2, quantity=1, unit_price=Decimal("50.00"))
+        order2.subtotal = Decimal("50.00")
+        order2.total_amount = Decimal("50.00")
+        order2.save(update_fields=["subtotal", "total_amount"])
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["total_revenue"], Decimal("100.00"))
+        order2.status = "refunded"
+        order2.save(update_fields=["status"])
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["total_revenue"], Decimal("50.00"))
+        self.assertEqual(response.context["total_orders"], 1)
+
 
 # =============================================================================
 # View Tests — Order List
@@ -549,11 +569,27 @@ class OrderDeleteViewTest(TestCase):
         self.order = make_order()
         self.url = reverse("sales:order_delete", kwargs={"pk": self.order.pk})
 
-    def test_post_deletes(self):
+    def test_post_soft_deletes(self):
         self.client.force_login(self.user)
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.is_deleted)
+        self.assertIsNotNone(self.order.deleted_at)
+
+    def test_post_soft_deletes_with_payments(self):
+        self.client.force_login(self.user)
+        make_payment(order=self.order)
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.is_deleted)
+
+    def test_deleted_order_hidden_from_list(self):
+        self.client.force_login(self.user)
+        self.client.post(self.url)
+        response = self.client.get(reverse("sales:order_list"))
+        self.assertEqual(len(response.context["orders"]), 0)
 
     def test_get_not_allowed(self):
         self.client.force_login(self.user)
@@ -650,7 +686,12 @@ class PaymentRefundViewTest(TestCase):
         self.client = Client()
         self.user = make_user()
         self.order = make_order()
-        self.payment = make_payment(order=self.order)
+        self.product = make_product(stock_quantity=100)
+        self.item = make_order_item(order=self.order, product=self.product, quantity=3)
+        self.order.subtotal = self.item.total_price
+        self.order.total_amount = self.item.total_price
+        self.order.save(update_fields=["subtotal", "total_amount"])
+        self.payment = make_payment(order=self.order, amount=self.order.total_amount)
         self.url = reverse("sales:payment_refund", kwargs={"pk": self.payment.pk})
 
     def test_post_refunds_completed_payment(self):
@@ -660,6 +701,32 @@ class PaymentRefundViewTest(TestCase):
         self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, Payment.PaymentStatus.REFUNDED)
 
+    def test_post_sets_order_status_refunded(self):
+        self.client.force_login(self.user)
+        response = self.client.post(self.url)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "refunded")
+
+    def test_post_restores_stock(self):
+        self.client.force_login(self.user)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, 100)
+        response = self.client.post(self.url)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, 103)
+
+    def test_post_creates_stock_movement(self):
+        self.client.force_login(self.user)
+        from inventory.models import StockMovement
+        response = self.client.post(self.url)
+        movement = StockMovement.objects.filter(
+            product=self.product,
+            reference=self.order.order_number,
+            movement_type="in",
+        ).first()
+        self.assertIsNotNone(movement)
+        self.assertEqual(movement.quantity, 3)
+
     def test_post_rejects_non_completed(self):
         self.client.force_login(self.user)
         self.payment.status = Payment.PaymentStatus.FAILED
@@ -668,6 +735,8 @@ class PaymentRefundViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, Payment.PaymentStatus.FAILED)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, 100)
 
     def test_get_not_allowed(self):
         self.client.force_login(self.user)

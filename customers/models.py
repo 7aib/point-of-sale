@@ -32,7 +32,7 @@ class Customer(TimestampMixin, SoftDeleteMixin, models.Model):
         return self.orders.aggregate(total=models.Sum("total_amount"))["total"] or 0
 
 
-class Order(TimestampMixin, models.Model):
+class Order(TimestampMixin, SoftDeleteMixin, models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = "cash", "Cash"
         CARD = "card", "Card"
